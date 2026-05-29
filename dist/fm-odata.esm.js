@@ -184,11 +184,14 @@ function formatLiteral(v) {
 function encodePathSegment(s) {
   return encodeURIComponent(s);
 }
+function odataEncode(v) {
+  return encodeURIComponent(v).replace(/%2C/gi, ",").replace(/%24/g, "$").replace(/%3D/g, "=").replace(/%3B/g, ";");
+}
 function buildQueryString(params) {
   const parts = [];
   for (const [k, v] of params) {
     if (v === "" || v === void 0 || v === null) continue;
-    parts.push(`${k}=${encodeURIComponent(v)}`);
+    parts.push(`${k}=${odataEncode(v)}`);
   }
   return parts.join("&");
 }
@@ -200,10 +203,10 @@ function generateBoundary(prefix) {
 }
 function buildEntitySetPath(baseUrl, entitySet, query) {
   const parts = [];
-  if (query?.$top !== void 0) parts.push(`$top=${encodeURIComponent(String(query.$top))}`);
-  if (query?.$skip !== void 0) parts.push(`$skip=${encodeURIComponent(String(query.$skip))}`);
-  if (query?.$filter) parts.push(`$filter=${encodeURIComponent(query.$filter)}`);
-  if (query?.$select) parts.push(`$select=${encodeURIComponent(query.$select)}`);
+  if (query?.$top !== void 0) parts.push(`$top=${odataEncode(String(query.$top))}`);
+  if (query?.$skip !== void 0) parts.push(`$skip=${odataEncode(String(query.$skip))}`);
+  if (query?.$filter) parts.push(`$filter=${odataEncode(query.$filter)}`);
+  if (query?.$select) parts.push(`$select=${odataEncode(query.$select)}`);
   const qs = parts.join("&");
   const encodedSet = encodePathSegment(entitySet);
   return qs ? `${baseUrl}/${encodedSet}?${qs}` : `${baseUrl}/${encodedSet}`;

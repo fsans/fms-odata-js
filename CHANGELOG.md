@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- **Query parameter encoding now preserves OData-special characters.** `odataEncode()` (used by `buildQueryString`, `Query#toURL()`, and batch operations) keeps commas (`,`), dollar signs (`$`), equals (`=`), and semicolons (`;`) as literal characters instead of percent-encoding them. FileMaker Server rejects `%2C`, `%24`, `%3D`, and `%3B` in `$select`, `$orderby`, `$expand`, and other system query options—now these parameters work correctly with multiple field names and nested expand options (e.g., `$expand=Orders($select=id,total;$top=5)`). (Ported from FMS-ODATA-MCP fix.)
+
 ### Added
 
 - M6 — OData `$batch` multipart request/response:

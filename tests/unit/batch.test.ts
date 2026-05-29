@@ -73,6 +73,18 @@ describe('Batch', () => {
     expect(body).toContain('$filter=')
   })
 
+  it('preserves literal commas in $select (not %2C)', () => {
+    // FileMaker Server rejects %2C encoding in $select
+    const db = makeClient(vi.fn())
+    const batch = db.batch()
+
+    batch.add({ op: 'list', entitySet: 'contact', query: { $select: 'ID,Name,Age' } })
+
+    const { body } = batch._serialize()
+    expect(body).toContain('$select=ID,Name,Age')
+    expect(body).not.toContain('%2C')
+  })
+
   it('serializes a changeset with create', () => {
     const db = makeClient(vi.fn())
     const batch = db.batch()

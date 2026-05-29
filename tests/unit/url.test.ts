@@ -5,6 +5,7 @@ import {
   escapeStringLiteral,
   formatDateTime,
   formatLiteral,
+  odataEncode,
   parseDateTime,
 } from '../../src/url.js'
 
@@ -112,6 +113,34 @@ describe('encodePathSegment', () => {
   })
 })
 
+describe('odataEncode', () => {
+  it('percent-encodes spaces as %20', () => {
+    expect(odataEncode('name eq Joe')).toBe('name%20eq%20Joe')
+  })
+
+  it('preserves commas as literal characters (not %2C)', () => {
+    // FileMaker Server rejects %2C in $select, $orderby, $expand
+    expect(odataEncode('ID,Name,Age')).toBe('ID,Name,Age')
+    expect(odataEncode('name asc,age desc')).toBe('name%20asc,age%20desc')
+  })
+
+  it('preserves $ and = as literal characters', () => {
+    // Required for nested $expand options like Orders($select=id,total)
+    expect(odataEncode('Orders($select=id,total;$top=5)')).toBe(
+      'Orders($select=id,total;$top=5)',
+    )
+  })
+
+  it('still encodes other special characters', () => {
+    expect(odataEncode("name eq 'Joe'")).toBe("name%20eq%20'Joe'")
+    expect(odataEncode('a & b')).toBe('a%20%26%20b')
+  })
+
+  it('handles values without commas correctly', () => {
+    expect(odataEncode('hello world')).toBe('hello%20world')
+  })
+})
+
 describe('buildQueryString', () => {
   it('emits key=value pairs joined by &', () => {
     expect(
@@ -150,5 +179,15 @@ describe('buildQueryString', () => {
         ['$top', '10'],
       ]),
     ).toBe('$skip=5&$top=10')
+  })
+
+  it('preserves commas in $select/$orderby values (not %2C)', () => {
+    // FileMaker Server rejects %2C encoding in these parameters
+    const qs = buildQueryString([
+      ['$select', 'ID,Name,Age'],
+      ['$orderby', 'name asc,age desc'],
+    ])
+    expect(qs).toBe('$select=ID,Name,Age&$orderby=name%20asc,age%20desc')
+    expect(qs).not.toContain('%2C')
   })
 })

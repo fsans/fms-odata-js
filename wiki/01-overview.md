@@ -4,7 +4,7 @@
 
 ### Key Design Principles
 
-*   **Zero Runtime Dependencies:** The library is built to be extremely lightweight (~3.8 KB gzipped), ensuring fast load times in restricted environments like the FileMaker Web Viewer [README.md:25-25]().
+*   **Zero Runtime Dependencies:** The library is built to be extremely lightweight (~7.9 KB gzipped), ensuring fast load times in restricted environments like the FileMaker Web Viewer [README.md:25-25]().
 *   **ESM First:** Distributed as a single ES module, making it compatible with modern build tools, Node.js 18+, and direct browser imports [package.json:5-7]().
 *   **FileMaker-Aware:** Automatically handles FMS-specific behaviors such as Basic Auth requirements, specialized date formatting, and script execution envelopes [README.md:28-31]().
 *   **Type Safety:** Provides full TypeScript inference for query building and response handling [README.md:26-26]().
@@ -84,10 +84,13 @@ Sources: [CHANGELOG.md:14-19](), [README.md:114-123](), [src/index.ts:1-10]()
 
 | Feature | Description |
 | :--- | :--- |
-| **Fluent Querying** | Build complex `$filter`, `$select`, and `$orderby` chains using a type-safe builder [README.md:87-94](). |
-| **CRUD Operations** | Standard methods for `create()`, `get()`, `patch()`, and `delete()` [README.md:96-105](). |
-| **Script Execution** | Trigger FileMaker scripts at any scope with parameters and receive `scriptResult` [README.md:114-123](). |
-| **Error Handling** | Specialized `FMODataError` and `FMScriptError` for granular debugging [README.md:125-140](). |
+| **Fluent Querying** | Build complex `$filter`, `$select`, and `$orderby` chains using a type-safe builder. |
+| **CRUD Operations** | Standard methods for `create()`, `get()`, `patch()`, and `delete()`. |
+| **Script Execution** | Trigger FileMaker scripts at database, entity-set, or record scope with parameters and receive `scriptResult`. |
+| **Containers** | Upload, download, stream, and delete binary data in FileMaker container fields via `ContainerRef`. |
+| **Schema Introspection** | Fetch and parse `$metadata` to discover entity types, properties, keys, and actions at runtime. |
+| **Batch Requests** | Combine multiple reads and atomic changesets into a single `multipart/mixed` HTTP round-trip via `Batch`. |
+| **Error Handling** | Specialized `FMODataError` and `FMScriptError` for granular HTTP and script-level error handling. |
 
 ---
 

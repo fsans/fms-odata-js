@@ -91,6 +91,13 @@ describe('Query builder - URL output', () => {
     expect(decodedParams(url)).toEqual({ $select: 'ID,Name' })
   })
 
+  it('$select preserves literal commas in URL (not %2C)', () => {
+    // FileMaker Server rejects %2C encoding in $select
+    const url = q().select('ID', 'Name', 'Age').toURL()
+    expect(url).toContain('$select=ID,Name,Age')
+    expect(url).not.toContain('%2C')
+  })
+
   it('$select is cumulative across multiple calls', () => {
     const url = q().select('a').select('b', 'c').toURL()
     expect(decodedParams(url).$select).toBe('a,b,c')
@@ -136,6 +143,13 @@ describe('Query builder - URL output', () => {
     expect(decodedParams(url).$orderby).toBe('name asc,age desc')
   })
 
+  it('$orderby preserves literal commas in URL (not %2C)', () => {
+    // FileMaker Server rejects %2C encoding in $orderby
+    const url = q().orderby('name').orderby('age', 'desc').toURL()
+    expect(url).toContain('$orderby=name%20asc,age%20desc')
+    expect(url).not.toContain('%2C')
+  })
+
   it('$top, $skip, and $count can be combined', () => {
     const url = q().top(50).skip(10).count().toURL()
     const p = decodedParams(url)
@@ -172,6 +186,15 @@ describe('Query builder - URL output', () => {
       )
       .toURL()
     expect(decodedParams(url).$expand).toBe('Orders($select=id,total;$top=5)')
+  })
+
+  it('$expand preserves literal commas in nested $select (not %2C)', () => {
+    // FileMaker Server rejects %2C encoding in $expand nested options
+    const url = q()
+      .expand('Orders', (nested) => nested.select('id', 'total'))
+      .toURL()
+    expect(url).toContain('$expand=Orders($select=id,total')
+    expect(url).not.toContain('%2C')
   })
 
   it('$expand supports multiple navigation properties (comma-joined)', () => {

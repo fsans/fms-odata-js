@@ -1,6 +1,6 @@
 # Core Architecture
 
-The `fm-odata-js` library is designed with a layered, modular architecture that separates the high-level fluent API from the low-level HTTP and URL serialization concerns. This design ensures that the library remains lightweight (~8.8 KB raw) while providing robust handling for FileMaker Server (FMS) specific behaviors.
+The `fm-odata-js` library is designed with a layered, modular architecture that separates the high-level fluent API from the low-level HTTP and URL serialization concerns. This design ensures that the library remains lightweight (~23.9 KB raw / ~7.9 KB gzipped) while providing robust handling for FileMaker Server (FMS) specific behaviors.
 
 ## System Layering
 

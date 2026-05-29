@@ -17,7 +17,7 @@
 import type { FMOData } from './client.js'
 import { executeRequest, type HttpRequestOptions } from './http.js'
 import type { ODataLiteral } from './url.js'
-import { encodePathSegment } from './url.js'
+import { encodePathSegment, odataEncode } from './url.js'
 import type { RequestOptions } from './types.js'
 
 /** Handle returned when adding an operation to a batch. Resolves to the operation result. */
@@ -67,11 +67,12 @@ function generateBoundary(prefix: string): string {
 function buildEntitySetPath(baseUrl: string, entitySet: string, query?: BatchReadOp['query']): string {
   // Build OData query string manually to avoid URLSearchParams percent-encoding
   // the leading '$' in OData system query options ($top, $filter, etc.).
+  // Use odataEncode which preserves commas (required by $select, $orderby, $expand).
   const parts: string[] = []
-  if (query?.$top !== undefined) parts.push(`$top=${encodeURIComponent(String(query.$top))}`)
-  if (query?.$skip !== undefined) parts.push(`$skip=${encodeURIComponent(String(query.$skip))}`)
-  if (query?.$filter) parts.push(`$filter=${encodeURIComponent(query.$filter)}`)
-  if (query?.$select) parts.push(`$select=${encodeURIComponent(query.$select)}`)
+  if (query?.$top !== undefined) parts.push(`$top=${odataEncode(String(query.$top))}`)
+  if (query?.$skip !== undefined) parts.push(`$skip=${odataEncode(String(query.$skip))}`)
+  if (query?.$filter) parts.push(`$filter=${odataEncode(query.$filter)}`)
+  if (query?.$select) parts.push(`$select=${odataEncode(query.$select)}`)
   const qs = parts.join('&')
   const encodedSet = encodePathSegment(entitySet)
   return qs ? `${baseUrl}/${encodedSet}?${qs}` : `${baseUrl}/${encodedSet}`

@@ -1,32 +1,29 @@
-# Future Milestones (M4–M6)
+# Completed Milestones (M4–M6)
 
-This page provides a high-level overview of the planned features for milestones M4 through M6. These milestones focus on expanding the library's capabilities beyond basic CRUD and script execution to include binary data handling, schema introspection, and performance optimizations via request batching.
+This page provides a high-level overview of the features delivered in milestones M4 through M6. These milestones expanded the library's capabilities beyond basic CRUD and script execution to include binary data handling, schema introspection, and performance optimizations via request batching. All three milestones are now complete.
 
-The roadmap is designed to keep the library lightweight, targeting a budget of approximately 1 KB gzipped per milestone [docs/m4-plan.md:10-12]().
+## Milestone Summary
 
-## Milestone Roadmap
+| Milestone | Feature | Version | Status |
+| :--- | :--- | :--- | :--- |
+| **M4 · Scripts** | Script execution at database / entity-set / record scope | v0.1.4 | ✓ Complete |
+| **M4 · Containers** | Read, upload, stream, and delete binary container fields | v0.1.5 | ✓ Complete |
+| **M5** | `$metadata` — fetch and parse the EDMX/CSDL XML schema | [Unreleased] | ✓ Complete |
+| **M6** | `$batch` — multipart requests with atomic changesets | [Unreleased] | ✓ Complete |
 
-The development order is prioritized by risk-adjusted value, moving from self-contained features to complex protocol implementations.
-
-| Milestone | Feature | Purpose |
-| :--- | :--- | :--- |
-| **M4** | **Containers** | Read, upload, and delete binary content in FileMaker container fields. |
-| **M5** | **$metadata** | Fetch and parse the EDMX/CSDL XML to enable schema discovery. |
-| **M6** | **$batch** | Combine multiple operations into a single multipart HTTP request. |
-
-Sources: [docs/m4-plan.md:3-8]()
+Sources: [CHANGELOG.md]()
 
 ### Feature Architecture Mapping
 
-The following diagram maps the planned public API components to their respective internal stub modules and the FileMaker Server (FMS) OData endpoints they interact with.
+The following diagram maps the public API components to their internal modules and the FileMaker Server OData endpoints they interact with.
 
-**Planned Entity Relationships**
+**Implemented Entity Relationships**
 ```mermaid
 graph TD
   subgraph "Public API Space"
     CR["ContainerRef"]
     MD["ODataMetadata"]
-    BH["BatchHandle"]
+    BH["Batch / BatchHandle"]
   end
 
   subgraph "Code Entity Space (src/)"
@@ -41,51 +38,57 @@ graph TD
     F_BATCH[".../$batch"]
   end
 
-  CR -.-> S_CONT
-  MD -.-> S_META
-  BH -.-> S_BATCH
+  CR --> S_CONT
+  MD --> S_META
+  BH --> S_BATCH
 
-  S_CONT === F_CONT
-  S_META === F_META
-  S_BATCH === F_BATCH
+  S_CONT --> F_CONT
+  S_META --> F_META
+  S_BATCH --> F_BATCH
 ```
-Sources: [src/containers.ts:1-2](), [src/metadata.ts:1-2](), [src/batch.ts:1-2](), [docs/m4-plan.md:108-110]()
 
 ---
 
 ## Containers (M4)
 
-The M4 milestone introduces the `ContainerRef` class to manage binary I/O for FileMaker container fields. This includes support for downloading files as Blobs or Streams, uploading data with proper `Content-Type` headers, and deleting container content.
+The M4 milestone delivered the `ContainerRef` class to manage binary I/O for FileMaker container fields. It supports downloading files as `Blob` or `ReadableStream`, uploading data via two FMS-documented wire formats, and clearing container content.
 
-Key features include:
-*   **Filename Parsing**: Extracting filenames from the `Content-Disposition` header [docs/m4-plan.md:127-128]().
-*   **Stream Support**: Utilizing `getStream()` to handle large files without buffering them entirely in memory [docs/m4-plan.md:117-118]().
-*   **Empty Handling**: Treating `Content-Length: 0` responses as null or empty containers [docs/m4-plan.md:115-116]().
+Key features delivered:
+*   **Dual upload modes**: `binary` (PATCH to `…/<field>`) for images and PDFs; `base64` (PATCH to parent record with annotations) for arbitrary file types.
+*   **MIME sniffing**: `contentType` is optional on upload — the library sniffs the type from magic bytes (PNG, JPEG, GIF, TIFF, PDF).
+*   **Filename parsing**: Extracts filenames from `Content-Disposition` including RFC 5987 `filename*=UTF-8''…` form.
+*   **Streaming**: `getStream()` returns the raw `ReadableStream` without buffering.
 
-For details on the `ContainerRef` API and implementation, see [Containers (M4)](#5.1).
-
-Sources: [docs/m4-plan.md:99-147](), [src/containers.ts:1-2]()
+For the full API reference, see [Containers (M4)](05.1-containers-m4).
 
 ---
 
-## Metadata and Batch (M5–M6)
+## Metadata (M5)
 
-These milestones focus on advanced OData protocol features that improve developer experience and network efficiency.
+M5 delivered a lightweight regex-based XML parser for the `$metadata` EDMX/CSDL endpoint. The parser produces a typed `ODataMetadata` object with no external dependencies and a minimal bundle footprint.
 
-### $metadata Parsing (M5)
-M5 introduces a lightweight XML parser for the `$metadata` endpoint. This allows the library to programmatically discover:
-*   **EntitySets**: Available tables/layouts.
-*   **EdmEntityType**: Field names and types (e.g., distinguishing between `Edm.String` and `Edm.DateTimeOffset`).
-*   **Actions**: Available FileMaker scripts exposed as OData actions.
+Key features delivered:
+*   `FMOData#metadata(opts?)` — fetches and parses the schema; results cached by default.
+*   `FMOData#metadataXml(opts?)` — returns the raw XML string for debugging.
+*   Parsed types: `ODataMetadata`, `EdmEntityType`, `EdmEntitySet`, `EdmProperty`, `EdmAction`.
+*   `refresh: true` option to bypass the cache.
 
-This metadata layer is the foundation for future code generation tools that can produce TypeScript interfaces directly from a FileMaker database schema.
+For the full API reference, see [Metadata (M5)](05.3-metadata-m5).
 
-### $batch Multipart (M6)
-M6 implements the OData `$batch` protocol, allowing multiple operations (GET, POST, PATCH, DELETE) to be sent in a single `multipart/mixed` HTTP request.
-*   **Atomicity**: Support for `Changesets` where all operations succeed or fail together.
-*   **Performance**: Reducing round-trips for high-latency connections.
+---
 
-For details on the CSDL parser and batch composer designs, see [Metadata and Batch (M5–M6)](#5.2).
+## Batch (M6)
+
+M6 delivered the `$batch` multipart request builder, allowing multiple reads and atomic write groups to be sent in a single HTTP round-trip.
+
+Key features delivered:
+*   `FMOData#batch()` — returns a `Batch` builder.
+*   `Batch#add(op)` — queues a read (GET entity-set with optional query params).
+*   `Batch#changeset(build)` — defines an atomic write group (POST / PATCH / DELETE). All operations succeed or fail together.
+*   `Batch#send(opts?)` — serialises, sends, and parses the multipart response into per-operation `BatchOpResult` objects.
+*   OData `$`-prefixed query parameters (`$top`, `$filter`, etc.) are serialised without percent-encoding the `$`.
+
+For the full API reference, see [Batch (M6)](05.4-batch-m6).
 
 **Milestone Logic Flow**
 ```mermaid
@@ -93,14 +96,12 @@ graph LR
   subgraph "M5: Introspection"
     P["CSDL Parser"] --> ET["EdmEntityType"]
     P --> ES["EdmEntitySet"]
+    P --> EA["EdmAction"]
   end
 
-  subgraph "M6: Optimization"
-    B["Batch Composer"] --> CS["Changeset (Atomic)"]
-    B --> RO["Individual Requests"]
+  subgraph "M6: Batch"
+    B["Batch Builder"] --> CS["Changeset (Atomic)"]
+    B --> RO["Read Operations (GET)"]
   end
-
-  ET -- "Validates" --> CS
-  ES -- "Validates" --> RO
 ```
-Sources: [docs/m4-plan.md:7-8](), [src/metadata.ts:1-2](), [src/batch.ts:1-2]()
+Sources: [src/metadata.ts](), [src/batch.ts](), [CHANGELOG.md]()
