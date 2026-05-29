@@ -185,6 +185,79 @@ describe.skipIf(!live)('live FMS integration', () => {
     expect(err).toBeInstanceOf(FMODataError)
     expect((err as FMODataError).status).toBeGreaterThanOrEqual(400)
   })
+
+  it('fetches and parses $metadata', async () => {
+    const meta = await db.metadata()
+    expect(meta.namespace).toBeTruthy()
+    expect(meta.entitySets.length).toBeGreaterThan(0)
+    expect(meta.entityTypes.length).toBeGreaterThan(0)
+
+    // Verify at least one entity type has a key (primary key)
+    const withKeys = meta.entityTypes.filter(et => et.keys.length > 0)
+    expect(withKeys.length).toBeGreaterThan(0)
+
+    // Verify metadata() is cached
+    const meta2 = await db.metadata()
+    expect(meta2).toBe(meta) // Same object reference
+
+    // Verify refresh: true fetches new data
+    const meta3 = await db.metadata({ refresh: true })
+    expect(meta3).not.toBe(meta)
+    expect(meta3.entitySets.length).toBeGreaterThan(0)
+  })
+
+  it('fetches raw $metadata XML', async () => {
+    const xml = await db.metadataXml()
+    expect(xml).toContain('<?xml')
+    expect(xml).toContain('<edmx:Edmx')
+    expect(xml).toContain('</edmx:Edmx>')
+  })
+
+  it('executes a $batch with a read and a changeset create', async () => {
+    // 1. Send a batch containing:
+    //    - a read (GET contact top 1)
+    //    - a changeset with a single create
+    const batch = db.batch()
+
+    batch.add({ op: 'list', entitySet: cfg.tables.contact, query: { $top: 1 } })
+
+    let createdKey: string | number | undefined
+    batch.changeset(cs => {
+      cs.create(cfg.tables.contact, {
+        first_name: 'fm-odata-js',
+        last_name: `batch-test-${Date.now()}`,
+      })
+    })
+
+    const result = await batch.send()
+
+    // 2. Batch outer response must be ok
+    expect(result.ok).toBe(true)
+    expect(result.responses.length).toBeGreaterThanOrEqual(1)
+
+    // 3. Read response has status 200
+    const readResp = result.responses[0]
+    expect(readResp.status).toBe(200)
+    expect(readResp.ok).toBe(true)
+
+    // 4. Changeset create response has status 201 (or 200)
+    if (result.responses.length > 1) {
+      const createResp = result.responses[1]
+      expect(createResp.ok).toBe(true)
+      expect(createResp.status).toBeGreaterThanOrEqual(200)
+      expect(createResp.status).toBeLessThan(300)
+
+      // Track the new row for cleanup
+      const body = createResp.body as Record<string, unknown> | undefined
+      if (body) {
+        const pkField = findPrimaryKey(body)
+        if (pkField) {
+          createdKey = body[pkField] as string | number
+          createdContactKeys.push(createdKey)
+        }
+      }
+    }
+  })
 })
 
 // Emit a single advisory line so developers know why the suite didn't run.

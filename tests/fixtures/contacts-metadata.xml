@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<edmx:Edmx Version="4.0" xmlns:edmx="http://docs.oasis-open.org/odata/ns/edmx">
+  <edmx:DataServices>
+    <Schema Namespace="FMI" xmlns="http://docs.oasis-open.org/odata/ns/edm">
+      <EntityType Name="contact">
+        <Key>
+          <PropertyRef Name="id" />
+        </Key>
+        <Property Name="id" Type="Edm.Int64" Nullable="false" />
+        <Property Name="firstName" Type="Edm.String" MaxLength="100" />
+        <Property Name="lastName" Type="Edm.String" MaxLength="100" />
+        <Property Name="email" Type="Edm.String" MaxLength="255" />
+        <Property Name="createdAt" Type="Edm.DateTimeOffset" />
+        <Property Name="isActive" Type="Edm.Boolean" />
+        <NavigationProperty Name="addresses" Type="Collection(FMI.address)" />
+      </EntityType>
+      <EntityType Name="address">
+        <Key>
+          <PropertyRef Name="id" />
+        </Key>
+        <Property Name="id" Type="Edm.Int64" Nullable="false" />
+        <Property Name="street" Type="Edm.String" MaxLength="200" />
+        <Property Name="city" Type="Edm.String" MaxLength="100" />
+        <Property Name="postalCode" Type="Edm.String" MaxLength="20" />
+        <NavigationProperty Name="contact" Type="FMI.contact" />
+      </EntityType>
+      <EntityContainer Name="Container">
+        <EntitySet Name="contact" EntityType="FMI.contact" />
+        <EntitySet Name="address" EntityType="FMI.address" />
+      </EntityContainer>
+      <Action Name="Ping">
+        <Parameter Name="scriptParameter" Type="Edm.String" />
+        <ReturnType Type="Edm.String" />
+      </Action>
+      <Action Name="SendWelcomeEmail" IsBound="true" EntityType="FMI.contact">
+        <Parameter Name="bindingParameter" Type="FMI.contact" />
+        <Parameter Name="templateName" Type="Edm.String" />
+        <ReturnType Type="Edm.Boolean" />
+      </Action>
+    </Schema>
+  </edmx:DataServices>
+</edmx:Edmx>

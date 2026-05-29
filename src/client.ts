@@ -1,14 +1,14 @@
+import { Batch } from './batch.js'
 import { executeJson, executeRequest, type HttpClientContext, type HttpRequestOptions } from './http.js'
+import { MetadataFetcher, type MetadataOptions, type ODataMetadata } from './metadata.js'
 import { Query } from './query.js'
 import { runScriptAtDatabase, type ScriptOptions, type ScriptResult } from './scripts.js'
 import type { FMODataOptions, RequestOptions } from './types.js'
 
 /**
  * `FMOData` is the entrypoint for all OData operations against a FileMaker
- * Server database. As of v0.1.4 it covers collection `.get()`, single-entity
- * CRUD (`byKey().get/patch/delete`), and FileMaker script invocation
- * (`script()` at database / entity-set / record scope). Containers,
- * `$metadata`, and `$batch` arrive in later M4 parts.
+ * Server database. Covers query/CRUD, script invocation, container I/O,
+ * `$metadata` introspection, and `$batch` operations.
  */
 export class FMOData {
   readonly host: string
@@ -17,6 +17,7 @@ export class FMOData {
   readonly timeoutMs: number | undefined
 
   /** @internal */ readonly _ctx: HttpClientContext
+  /** @internal */ private _metadataFetcher?: MetadataFetcher
 
   constructor(options: FMODataOptions) {
     if (!options.host) throw new TypeError('FMOData: `host` is required')
@@ -79,6 +80,54 @@ export class FMOData {
    */
   async script(name: string, opts: ScriptOptions = {}): Promise<ScriptResult> {
     return runScriptAtDatabase(this, name, opts)
+  }
+
+  /**
+   * Fetch the OData CSDL `$metadata` XML and parse it into a typed structure.
+   * Results are cached; pass `refresh: true` to force a refetch.
+   *
+   * ```ts
+   * const meta = await db.metadata()
+   * console.log(meta.entitySets.map(es => es.name))
+   * ```
+   */
+  async metadata(opts: MetadataOptions = {}): Promise<ODataMetadata> {
+    if (!this._metadataFetcher) {
+      this._metadataFetcher = new MetadataFetcher(this._ctx, this.baseUrl)
+    }
+    return this._metadataFetcher.fetch(opts)
+  }
+
+  /**
+   * Fetch the raw `$metadata` XML (escape hatch for debugging or custom parsing).
+   */
+  async metadataXml(opts: RequestOptions = {}): Promise<string> {
+    if (!this._metadataFetcher) {
+      this._metadataFetcher = new MetadataFetcher(this._ctx, this.baseUrl)
+    }
+    return this._metadataFetcher.fetchXml(opts)
+  }
+
+  /**
+   * Create a new `$batch` builder for composing multiple OData operations
+   * into a single HTTP round-trip.
+   *
+   * Read operations (`add`) are executed independently. Write operations
+   * (`changeset`) are grouped atomically — all succeed or all fail.
+   *
+   * ```ts
+   * const batch = db.batch()
+   * const contacts = batch.add({ op: 'list', entitySet: 'contact', query: { $top: 5 } })
+   * batch.changeset(cs => {
+   *   cs.create('contact', { firstName: 'A', lastName: 'B' })
+   *   cs.patch('contact', 123, { firstName: 'Updated' })
+   * })
+   * const result = await batch.send()
+   * console.log(await contacts._promise) // First op result
+   * ```
+   */
+  batch(): Batch {
+    return new Batch(this)
   }
 
   /** @internal */

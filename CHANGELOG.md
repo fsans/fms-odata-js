@@ -7,6 +7,31 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- M6 — OData `$batch` multipart request/response:
+  - `FMOData#batch()` returns a `Batch` builder for composing multi-operation requests in a single HTTP round-trip.
+  - `Batch#add(op)` queues a read operation (GET entity-set with optional `$top`, `$skip`, `$filter`, `$select`). Returns a `BatchHandle<T>`.
+  - `Batch#changeset(build)` defines an atomic group of write operations (POST / PATCH / DELETE). All operations in a changeset succeed or fail together.
+  - `Changeset#create(entitySet, body)`, `Changeset#patch(entitySet, key, body, opts?)`, `Changeset#delete(entitySet, key, opts?)` add write operations. Each accepts an optional `If-Match` header.
+  - `Batch#send(opts?)` serialises the multipart/mixed body, POSTs to `/<db>/$batch`, and parses the multipart response back into per-operation `BatchOpResult` objects.
+  - `BatchResult` aggregates all responses in request order with an `ok` boolean (true when all statuses < 400).
+  - `BatchHandle<T>` carries a `_promise` that resolves/rejects individually when the batch settles.
+  - Exported types: `Batch`, `Changeset`, `BatchHandle`, `BatchReadOp`, `BatchOpResult`, `BatchResult`.
+  - OData `$`-prefixed query parameters (`$top`, `$filter`, etc.) are serialised without percent-encoding the `$` sign, which is required by FMS.
+  - Multipart MIME parser correctly strips outer `application/http` MIME headers before extracting the inner HTTP status line and body.
+  - 14 unit tests covering serialisation (read, changeset, PATCH/DELETE, string-key escaping), response parsing (single/multi, error, mixed read+changeset), header forwarding, `$batch` URL, and `AbortSignal`.
+  - Live integration test: sends a batch with a read and a single-create changeset, asserts both responses are successful, and cleans up any created rows.
+
+- M5 — OData `$metadata` parser:
+  - `FMOData#metadata(opts?)` fetches and parses the CSDL XML into a typed `ODataMetadata` object.
+  - `FMOData#metadataXml(opts?)` returns the raw XML (escape hatch for debugging).
+  - New exported types: `ODataMetadata`, `EdmEntityType`, `EdmEntitySet`, `EdmProperty`, `EdmAction`.
+  - Metadata results are cached by default; pass `refresh: true` to force a refetch.
+  - Lightweight ~200 LoC XML parser with zero external dependencies (bundle budget ~1 KB gzipped).
+  - 15 unit tests covering entity types, keys, properties, navigation properties, entity sets, and actions.
+  - Live integration test fetches metadata from the configured FMS instance.
+
 ## [0.1.5] - 2026-04-29
 
 ### Added
