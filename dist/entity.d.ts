@@ -84,5 +84,66 @@ export declare class EntityRef<T = Record<string, unknown>> {
      * )
      */
     patchContainers(containers: Record<string, ContainerJsonValue>, regularFields?: Record<string, unknown>, opts?: EntityWriteOptions): Promise<void>;
+    /**
+     * Get the references for a navigation property on this record.
+     *
+     * `GET /<EntitySet>(<key>)/<navProperty>/$ref`
+     *
+     * Returns an array of entity references. For a single-valued navigation
+     * property, the array has at most one element.
+     *
+     * @example
+     * ```ts
+     * const refs = await db.from('contact').byKey(7).getRefs('addresses')
+     * // [{ '@odata.id': 'https://fms.example.com/fmi/odata/v4/DB/address(1)' }, ...]
+     * ```
+     */
+    getRefs(navProperty: string, opts?: RequestOptions): Promise<EntityRefInfo[]>;
+    /**
+     * Add a reference to a related record via a navigation property.
+     *
+     * `POST /<EntitySet>(<key>)/<navProperty>/$ref`
+     *
+     * For single-valued navigation properties, use `setRef()` instead (PATCH).
+     *
+     * @example
+     * ```ts
+     * await db.from('contact').byKey(7).addRef('addresses', 42)
+     * ```
+     */
+    addRef(navProperty: string, relatedKey: string | number, opts?: EntityWriteOptions): Promise<void>;
+    /**
+     * Set (replace) the reference for a single-valued navigation property.
+     *
+     * `PATCH /<EntitySet>(<key>)/<navProperty>/$ref`
+     *
+     * @example
+     * ```ts
+     * await db.from('order').byKey(100).setRef('customer', 7)
+     * ```
+     */
+    setRef(navProperty: string, relatedKey: string | number, opts?: EntityWriteOptions): Promise<void>;
+    /**
+     * Remove a reference from a navigation property.
+     *
+     * `DELETE /<EntitySet>(<key>)/<navProperty>/$ref`
+     *
+     * For collection-valued navigation properties, pass the `relatedKey` to
+     * remove a specific reference. For single-valued, omit `relatedKey` to
+     * clear the reference.
+     *
+     * @example
+     * ```ts
+     * await db.from('contact').byKey(7).removeRef('addresses', 42)
+     * await db.from('order').byKey(100).removeRef('customer')
+     * ```
+     */
+    removeRef(navProperty: string, relatedKey?: string | number, opts?: EntityWriteOptions): Promise<void>;
+    /** @internal — build a relative @odata.id for a related entity. */
+    private _refId;
+}
+/** Entity reference info returned by `getRefs()`. */
+export interface EntityRefInfo {
+    '@odata.id': string;
 }
 //# sourceMappingURL=entity.d.ts.map

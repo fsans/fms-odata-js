@@ -2,8 +2,15 @@ import { Batch } from './batch.js'
 import { executeJson, executeRequest, type HttpClientContext, type HttpRequestOptions } from './http.js'
 import { MetadataFetcher, type MetadataOptions, type ODataMetadata } from './metadata.js'
 import { Query } from './query.js'
-import { runScriptAtDatabase, type ScriptOptions, type ScriptResult } from './scripts.js'
+import { runScriptAtDatabase, runScriptByIdAtDatabase, type ScriptOptions, type ScriptResult } from './scripts.js'
 import type { FMODataOptions, RequestOptions } from './types.js'
+import {
+  type FMVersionMajor,
+  type FMVersionInfo,
+  type FMFeatureFlags,
+  FM_VERSION_MATRIX,
+  hasFeature as specHasFeature,
+} from '@fm-odata/spec-ts'
 
 /**
  * `FMOData` is the entrypoint for all OData operations against a FileMaker
@@ -83,6 +90,22 @@ export class FMOData {
   }
 
   /**
+   * Invoke a FileMaker script by its immutable FMSID.
+   *
+   * Requires FileMaker Server 2026+ (v26). Use `hasFeature('scriptsByFMSID')`
+   * to check before calling. FMSID-based invocation is more stable than
+   * name-based: it survives script renames and works across database
+   * migrations.
+   *
+   * ```ts
+   * const result = await db.scriptById(42, { parameter: 'hello' })
+   * ```
+   */
+  async scriptById(fmsid: number, opts: ScriptOptions = {}): Promise<ScriptResult> {
+    return runScriptByIdAtDatabase(this, fmsid, opts)
+  }
+
+  /**
    * Fetch the OData CSDL `$metadata` XML and parse it into a typed structure.
    * Results are cached; pass `refresh: true` to force a refetch.
    *
@@ -106,6 +129,88 @@ export class FMOData {
       this._metadataFetcher = new MetadataFetcher(this._ctx, this.baseUrl)
     }
     return this._metadataFetcher.fetchXml(opts)
+  }
+
+  // -------------------------------------------------------------------------
+  // Version detection & feature gating (Phase 2 — spec alignment)
+  // -------------------------------------------------------------------------
+
+  /** @internal */ private _detectedVersion: FMVersionMajor | null | undefined
+
+  /**
+   * Detect the FileMaker Server major version by fetching `$metadata` and
+   * extracting the `Org.OData.Core.V1.ProductVersion` annotation. The result
+   * is cached for the lifetime of this `FMOData` instance.
+   *
+   * Returns the major version string (`'19'`, `'21'`, `'22'`, `'26'`) or
+   * `'future'` if the version is newer than the spec knows about. Returns
+   * `null` if the version cannot be determined (e.g. the metadata lacks the
+   * annotation).
+   *
+   * ```ts
+   * const v = await db.version()
+   * if (v === '26') console.log('Server is FileMaker 2026')
+   * ```
+   */
+  async version(): Promise<FMVersionMajor | null> {
+    if (this._detectedVersion !== undefined) return this._detectedVersion
+    try {
+      const meta = await this.metadata()
+      const raw = meta.productVersion
+      if (!raw) {
+        this._detectedVersion = null
+        return null
+      }
+      const match = raw.match(/^(\d+)\./)
+      if (!match) {
+        this._detectedVersion = null
+        return null
+      }
+      const major = match[1] as FMVersionMajor
+      // If the version is known in the spec matrix, use it; otherwise 'future'.
+      this._detectedVersion = major in FM_VERSION_MATRIX ? major : 'future'
+      return this._detectedVersion
+    } catch {
+      this._detectedVersion = null
+      return null
+    }
+  }
+
+  /**
+   * Get the full version info (feature flags + query option flags) for the
+   * detected server version. Fetches metadata if not already cached.
+   *
+   * Returns `null` if the version cannot be determined.
+   *
+   * ```ts
+   * const info = await db.versionInfo()
+   * if (info?.features.applyAggregation) {
+   *   // Server supports $apply
+   * }
+   * ```
+   */
+  async versionInfo(): Promise<FMVersionInfo | null> {
+    const v = await this.version()
+    if (!v) return null
+    return FM_VERSION_MATRIX[v]
+  }
+
+  /**
+   * Check if the server supports a specific feature. Fetches metadata (to
+   * detect the version) on first call; subsequent calls use the cached result.
+   *
+   * Returns `false` if the version cannot be determined.
+   *
+   * ```ts
+   * if (await db.hasFeature('applyAggregation')) {
+   *   const result = await db.from('orders').apply(...)
+   * }
+   * ```
+   */
+  async hasFeature(feature: keyof FMFeatureFlags): Promise<boolean> {
+    const v = await this.version()
+    if (!v) return false
+    return specHasFeature(v, feature)
   }
 
   /**

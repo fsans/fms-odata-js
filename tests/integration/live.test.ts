@@ -1,5 +1,6 @@
 /**
- * Opt-in live-integration suite. Runs only when `FM_ODATA_LIVE=1` in `.env`.
+ * Opt-in live-integration suite. Runs only when `FM_LIVE=1` (or legacy
+ * `FM_ODATA_LIVE=1`) in `.env`.
  *
  * Exercises collection GET + single-entity CRUD against a real FMS instance.
  * Reads connection info from `.env` (see `.env.sample`).
@@ -16,7 +17,7 @@ import { FMOData, basicAuth, FMODataError, FMScriptError } from '../../src/index
 const cfg = loadFmConfig()
 const live = cfg.live
 
-// Entire suite is skipped unless FM_ODATA_LIVE=1. This lets `npm test` stay
+// Entire suite is skipped unless FM_LIVE=1 (or legacy FM_ODATA_LIVE=1). This lets `npm test` stay
 // fast and offline; developers opt in when working against a real FMS.
 describe.skipIf(!live)('live FMS integration', () => {
   const fetch = createFetch({ insecureTls: cfg.insecureTls })
@@ -263,7 +264,7 @@ describe.skipIf(!live)('live FMS integration', () => {
 // Emit a single advisory line so developers know why the suite didn't run.
 if (!live) {
   // eslint-disable-next-line no-console
-  console.log('[live] FM_ODATA_LIVE != 1 — skipping live FMS integration suite')
+  console.log('[live] FM_LIVE != 1 — skipping live FMS integration suite')
 }
 
 /**

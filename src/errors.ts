@@ -1,5 +1,11 @@
 /**
  * Normalized error thrown by all fm-odata-js operations.
+ *
+ * The error class shape is aligned with `@fm-odata/spec-ts` (the canonical
+ * spec package). fm-odata-js keeps its own class identity for backward
+ * compatibility with existing `instanceof` checks in user code.
+ *
+ * @see https://github.com/fsans/FM-ODATA_SPEC/blob/main/docs/13-quirks.md
  */
 export class FMODataError extends Error {
   readonly status: number
@@ -108,4 +114,21 @@ export class FMScriptError extends FMODataError {
     this.scriptError = init.scriptError
     if (init.scriptResult !== undefined) this.scriptResult = init.scriptResult
   }
+}
+
+// ---------------------------------------------------------------------------
+// Spec alignment: re-export type-level helpers from @fm-odata/spec-ts
+// ---------------------------------------------------------------------------
+
+/** OData standard error response body shape (from spec). */
+export type { ODataErrorBody } from '@fm-odata/spec-ts'
+
+/** Check if an error is a FileMaker OData error. */
+export function isFMODataError(err: unknown): err is FMODataError {
+  return err instanceof FMODataError
+}
+
+/** Check if an error is a FileMaker script error. */
+export function isFMScriptError(err: unknown): err is FMScriptError {
+  return err instanceof FMScriptError
 }

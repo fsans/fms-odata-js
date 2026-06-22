@@ -22,6 +22,7 @@ import {
   formatLiteral,
   type ODataLiteral,
 } from './url.js'
+import type { AggregateFunction } from '@fm-odata/spec-ts'
 
 // ---------------------------------------------------------------------------
 // Filter
@@ -116,6 +117,7 @@ export interface QueryOptionsState {
   skip?: number
   count?: boolean
   search?: string
+  apply?: string
 }
 
 // ---------------------------------------------------------------------------
@@ -206,6 +208,78 @@ export class Query<T = Record<string, unknown>> {
 
   search(term: string): this {
     this._state.search = term
+    return this
+  }
+
+  // -------------------------------------------------------------------------
+  // $apply (aggregation) — requires FMS 22.0.1+ (FileMaker 2024)
+  // -------------------------------------------------------------------------
+
+  /**
+   * Set a raw `$apply` expression. Use this for advanced transformations
+   * that the `aggregate()` / `groupBy()` helpers don't cover.
+   *
+   * Requires FileMaker Server 2024+ (v22). Use `db.hasFeature('applyAggregation')`
+   * to check before calling.
+   *
+   * @example
+   * ```ts
+   * const result = await db.from('orders').apply('aggregate(total with sum as totalSum)')
+   *   .get()
+   * ```
+   */
+  apply(expr: string): this {
+    this._state.apply = expr
+    return this
+  }
+
+  /**
+   * Aggregate the entity set. Produces a `$apply=aggregate(...)` expression.
+   *
+   * Requires FileMaker Server 2024+ (v22).
+   *
+   * @example
+   * ```ts
+   * const result = await db.from('orders')
+   *   .aggregate([{ field: 'total', function: 'sum', alias: 'totalSum' }])
+   *   .get()
+   * // $apply=aggregate(total with sum as totalSum)
+   * ```
+   */
+  aggregate(expressions: Array<{ field: string; function: AggregateFunction; alias: string }>): this {
+    const parts = expressions.map((e) => `${e.field} with ${e.function} as ${e.alias}`)
+    this._state.apply = `aggregate(${parts.join(',')})`
+    return this
+  }
+
+  /**
+   * Group the entity set by one or more fields, optionally with aggregation.
+   * Produces a `$apply=groupby((fields), aggregate(...))` expression.
+   *
+   * Requires FileMaker Server 2024+ (v22).
+   *
+   * @example
+   * ```ts
+   * const result = await db.from('orders')
+   *   .groupBy(
+   *     ['customerId'],
+   *     [{ field: 'total', function: 'sum', alias: 'totalSum' }],
+   *   )
+   *   .get()
+   * // $apply=groupby((customerId),aggregate(total with sum as totalSum))
+   * ```
+   */
+  groupBy(
+    fields: string[],
+    aggregateExpressions?: Array<{ field: string; function: AggregateFunction; alias: string }>,
+  ): this {
+    const fieldList = fields.join(',')
+    if (aggregateExpressions && aggregateExpressions.length > 0) {
+      const aggParts = aggregateExpressions.map((e) => `${e.field} with ${e.function} as ${e.alias}`)
+      this._state.apply = `groupby((${fieldList}),aggregate(${aggParts.join(',')}))`
+    } else {
+      this._state.apply = `groupby((${fieldList}))`
+    }
     return this
   }
 
@@ -361,6 +435,7 @@ export function serializeOptions(
   if (s.skip !== undefined) pairs.push(['$skip', String(s.skip)])
   if (s.count) pairs.push(['$count', 'true'])
   if (s.search) pairs.push(['$search', s.search])
+  if (s.apply) pairs.push(['$apply', s.apply])
 
   if (opts.topLevel) return buildQueryString(pairs)
   return pairs.map(([k, v]) => `${k}=${v}`).join(';')

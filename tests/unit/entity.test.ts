@@ -187,3 +187,126 @@ describe('Query.get', () => {
     expect(result.nextLink).toBeUndefined()
   })
 })
+
+// ---------------------------------------------------------------------------
+// Record references ($ref) — Phase 3
+// ---------------------------------------------------------------------------
+
+describe('EntityRef $ref operations', () => {
+  it('getRefs returns array from collection navigation property', async () => {
+    const fetchMock = vi.fn().mockResolvedValue(
+      jsonResponse({
+        value: [
+          { '@odata.id': `${BASE}/address(1)` },
+          { '@odata.id': `${BASE}/address(2)` },
+        ],
+      }),
+    )
+    const db = makeClient(fetchMock)
+    const refs = await db.from('contact').byKey(7).getRefs('addresses')
+
+    expect(refs).toHaveLength(2)
+    expect(refs[0]!['@odata.id']).toBe(`${BASE}/address(1)`)
+
+    const [url, init] = fetchMock.mock.calls[0]!
+    expect(url).toBe(`${BASE}/contact(7)/addresses/$ref`)
+    expect((init as RequestInit).method).toBe('GET')
+  })
+
+  it('getRefs returns single-element array for single-valued nav property', async () => {
+    const fetchMock = vi.fn().mockResolvedValue(
+      jsonResponse({ '@odata.id': `${BASE}/customer(7)` }),
+    )
+    const db = makeClient(fetchMock)
+    const refs = await db.from('order').byKey(100).getRefs('customer')
+
+    expect(refs).toHaveLength(1)
+    expect(refs[0]!['@odata.id']).toBe(`${BASE}/customer(7)`)
+  })
+
+  it('getRefs returns empty array when no references exist', async () => {
+    const fetchMock = vi.fn().mockResolvedValue(jsonResponse({}))
+    const db = makeClient(fetchMock)
+    const refs = await db.from('contact').byKey(7).getRefs('addresses')
+    expect(refs).toEqual([])
+  })
+
+  it('addRef POSTs to $ref with @odata.id body', async () => {
+    const fetchMock = vi.fn().mockResolvedValue(new Response(null, { status: 204 }))
+    const db = makeClient(fetchMock)
+    await db.from('contact').byKey(7).addRef('addresses', 42)
+
+    const [url, init] = fetchMock.mock.calls[0]!
+    expect(url).toBe(`${BASE}/contact(7)/addresses/$ref`)
+    expect((init as RequestInit).method).toBe('POST')
+    expect(JSON.parse((init as RequestInit).body as string)).toEqual({
+      '@odata.id': 'addresses(42)',
+    })
+  })
+
+  it('addRef escapes string keys in @odata.id', async () => {
+    const fetchMock = vi.fn().mockResolvedValue(new Response(null, { status: 204 }))
+    const db = makeClient(fetchMock)
+    await db.from('contact').byKey(7).addRef('tags', "O'Brien")
+
+    const [, init] = fetchMock.mock.calls[0]!
+    expect(JSON.parse((init as RequestInit).body as string)).toEqual({
+      '@odata.id': "tags('O''Brien')",
+    })
+  })
+
+  it('setRef PATCHes $ref with @odata.id body', async () => {
+    const fetchMock = vi.fn().mockResolvedValue(new Response(null, { status: 204 }))
+    const db = makeClient(fetchMock)
+    await db.from('order').byKey(100).setRef('customer', 7)
+
+    const [url, init] = fetchMock.mock.calls[0]!
+    expect(url).toBe(`${BASE}/order(100)/customer/$ref`)
+    expect((init as RequestInit).method).toBe('PATCH')
+    expect(JSON.parse((init as RequestInit).body as string)).toEqual({
+      '@odata.id': 'customer(7)',
+    })
+  })
+
+  it('removeRef DELETEs $ref without relatedKey (single-valued)', async () => {
+    const fetchMock = vi.fn().mockResolvedValue(new Response(null, { status: 204 }))
+    const db = makeClient(fetchMock)
+    await db.from('order').byKey(100).removeRef('customer')
+
+    const [url, init] = fetchMock.mock.calls[0]!
+    expect(url).toBe(`${BASE}/order(100)/customer/$ref`)
+    expect((init as RequestInit).method).toBe('DELETE')
+  })
+
+  it('removeRef DELETEs specific $ref with relatedKey (collection)', async () => {
+    const fetchMock = vi.fn().mockResolvedValue(new Response(null, { status: 204 }))
+    const db = makeClient(fetchMock)
+    await db.from('contact').byKey(7).removeRef('addresses', 42)
+
+    const [url, init] = fetchMock.mock.calls[0]!
+    expect((init as RequestInit).method).toBe('DELETE')
+    // URL includes the reference ID
+    expect(url).toContain('$ref')
+  })
+
+  it('forwards AbortSignal on $ref operations', async () => {
+    const fetchMock = vi.fn().mockImplementation((_url: string, init: RequestInit) => {
+      if (init.signal?.aborted) {
+        return Promise.reject(new DOMException('aborted', 'AbortError'))
+      }
+      return new Promise((_resolve, reject) => {
+        init.signal?.addEventListener(
+          'abort',
+          () => reject(new DOMException('aborted', 'AbortError')),
+          { once: true },
+        )
+      })
+    })
+    const db = makeClient(fetchMock)
+    const ctrl = new AbortController()
+    ctrl.abort()
+    await expect(
+      db.from('contact').byKey(7).getRefs('addresses', { signal: ctrl.signal }),
+    ).rejects.toThrow(/abort/i)
+  })
+})

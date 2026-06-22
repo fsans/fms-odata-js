@@ -7,6 +7,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added — Spec alignment with @fm-odata/spec-ts
+
+This release aligns fm-odata-js with the [FM-ODATA_SPEC](https://github.com/fsans/FM-ODATA_SPEC) reference specification. The library now depends on `@fm-odata/spec-ts` (as a devDependency — bundled at build time, zero runtime deps) for shared type definitions and the version feature matrix.
+
+- **Version detection & feature gating.** `FMOData#version()` lazily fetches `$metadata`, extracts the `Org.OData.Core.V1.ProductVersion` annotation, and caches the detected FileMaker Server major version (`'19'`, `'21'`, `'22'`, `'26'`, or `'future'`). `FMOData#versionInfo()` returns the full version descriptor with feature flags. `FMOData#hasFeature(feature)` checks if the server supports a specific feature (e.g., `applyAggregation`, `scriptsByFMSID`, `webhooks`). 12 unit tests.
+- **`$apply` aggregation support.** `Query#apply(expr)` sets a raw `$apply` expression. `Query#aggregate(expressions)` builds `aggregate(field with function as alias)`. `Query#groupBy(fields, aggregateExpressions?)` builds `groupby((fields),aggregate(...))`. Requires FMS 2024+ (v22). 7 unit tests.
+- **FMSID-based script invocation.** `FMOData#scriptById(fmsid, opts)` invokes a script by its immutable FMSID via `Script.FMSID:<id>` URL. `ScriptInvoker#runById(fmsid, opts)` and `ScriptInvoker#urlById(fmsid)` provide the low-level API. Requires FMS 2026+ (v26). 7 unit tests.
+- **Record references (`$ref`).** `EntityRef#getRefs(navProperty)`, `addRef(navProperty, relatedKey)`, `setRef(navProperty, relatedKey)`, and `removeRef(navProperty, relatedKey?)` provide full OData `$ref` CRUD for navigation properties. 9 unit tests.
+- **FMID auth support.** `fmidAuth(token)` helper builds an `FMID <token>` Authorization header for FileMaker Cloud. The HTTP client now recognizes the `FMID` auth scheme prefix.
+- **Spec type re-exports.** Version types (`FMVersionMajor`, `FMVersionInfo`, `FMFeatureFlags`, `FMQueryOptionFlags`), auth types (`FMAuthScheme`, `FMAuthToken`, `FMAuthTokenProvider`), aggregate types (`AggregateFunction`), and error types (`ODataErrorBody`) are re-exported from `@fm-odata/spec-ts`.
+- **Error helpers.** `isFMODataError(err)` and `isFMScriptError(err)` type guards.
+- **Standardized env var names.** The test harness and probe script now accept standardized env var names (`FM_SERVER`, `FM_DATABASE`, `FM_USER`, `FM_PASSWORD`, `FM_VERIFY_SSL`, `FM_TIMEOUT`, `FM_LIVE`) alongside the legacy `FM_ODATA_*` names. Standardized names take precedence. `.env.sample` updated with both forms documented.
+
 ### Fixed
 
 - **Query parameter encoding now preserves OData-special characters.** `odataEncode()` (used by `buildQueryString`, `Query#toURL()`, and batch operations) keeps commas (`,`), dollar signs (`$`), equals (`=`), and semicolons (`;`) as literal characters instead of percent-encoding them. FileMaker Server rejects `%2C`, `%24`, `%3D`, and `%3B` in `$select`, `$orderby`, `$expand`, and other system query options—now these parameters work correctly with multiple field names and nested expand options (e.g., `$expand=Orders($select=id,total;$top=5)`). (Ported from FMS-ODATA-MCP fix.)

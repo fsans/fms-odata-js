@@ -8,13 +8,30 @@
  *   POST /<db>/<EntitySet>/Script.<name>           // entity-set context
  *   POST /<db>/<EntitySet>(<key>)/Script.<name>    // single-record context
  *
+ * Starting with FileMaker Server 2026 (v26), scripts can also be invoked by
+ * their immutable FMSID instead of the name:
+ *
+ *   POST /<db>/Script.FMSID:<id>                   // database-level
+ *   POST /<db>/<EntitySet>/Script.FMSID:<id>       // entity-set context
+ *   POST /<db>/<EntitySet>(<key>)/Script.FMSID:<id> // single-record context
+ *
  * The optional parameter is sent as `{ "scriptParameter": "<string>" }`. The
  * response envelope is `{ "scriptResult": "...", "scriptError": "0" }`; a
  * non-zero `scriptError` becomes an `FMScriptError`.
+ *
+ * @see https://github.com/fsans/FM-ODATA_SPEC/blob/main/docs/06-scripts.md
  */
 import type { FMOData } from './client.js';
 import type { RequestOptions } from './types.js';
 import { type ODataLiteral } from './url.js';
+/** Script identifier: either by name or by FMSID (v26+). */
+export type ScriptIdentifier = {
+    type: 'name';
+    name: string;
+} | {
+    type: 'fmsid';
+    id: number;
+};
 /** Options accepted by a script invocation. */
 export interface ScriptOptions extends RequestOptions {
     /**
@@ -56,8 +73,25 @@ export declare class ScriptInvoker {
     constructor(client: FMOData, scope?: ScriptScope);
     /** Build the absolute URL for invoking `name` at this scope. */
     url(name: string): string;
-    /** Invoke the script. Resolves to a `ScriptResult` on success. */
+    /** Build the absolute URL for invoking by FMSID at this scope. */
+    urlById(fmsid: number): string;
+    /** @internal — build URL from a script path segment. */
+    private _urlForSegment;
+    /** Invoke the script by name. Resolves to a `ScriptResult` on success. */
     run(name: string, opts?: ScriptOptions): Promise<ScriptResult>;
+    /**
+     * Invoke the script by its immutable FMSID.
+     *
+     * Requires FileMaker Server 2026+ (v26). Use `db.hasFeature('scriptsByFMSID')`
+     * to check before calling.
+     *
+     * ```ts
+     * const result = await db.scriptById(42, { parameter: 'hello' })
+     * ```
+     */
+    runById(fmsid: number, opts?: ScriptOptions): Promise<ScriptResult>;
+    /** @internal — execute a script POST at the given URL. */
+    private _runAtUrl;
 }
 /**
  * Parse the `{ scriptResult, scriptError }` envelope FMS returns from a
@@ -71,6 +105,8 @@ export declare function parseScriptEnvelope(raw: unknown, request: {
 }): ScriptResult;
 /** @internal — convenience factory used by client/query/entity helpers. */
 export declare function runScriptAtDatabase(client: FMOData, name: string, opts?: ScriptOptions): Promise<ScriptResult>;
+/** @internal — convenience factory for FMSID-based invocation. */
+export declare function runScriptByIdAtDatabase(client: FMOData, fmsid: number, opts?: ScriptOptions): Promise<ScriptResult>;
 /** @internal */
 export declare function runScriptAtEntitySet(client: FMOData, entitySet: string, name: string, opts?: ScriptOptions): Promise<ScriptResult>;
 /** @internal */

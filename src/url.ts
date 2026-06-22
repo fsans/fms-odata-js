@@ -1,12 +1,19 @@
 /**
  * OData URL encoding helpers.
  *
+ * Aligned with `@fm-odata/spec-ts` for the shared helpers (`escapeStringLiteral`,
+ * `formatLiteral`). fm-odata-js keeps its richer implementations for
+ * `formatDateTime`, `parseDateTime`, `odataEncode`, `buildQueryString`, and
+ * `encodePathSegment` which go beyond the spec's minimal versions.
+ *
  * - String literals are single-quoted with inner single-quotes doubled.
  * - Dates serialize as UTC ISO-8601 without milliseconds (FileMaker quirk).
  * - Query-string keys are emitted verbatim (always safe ASCII such as `$filter`)
  *   while values are percent-encoded via `odataEncode`, which uses `%20`
  *   for spaces rather than `+` (required by OData `$filter`) and preserves
  *   commas (required by `$select`, `$orderby`, `$expand`).
+ *
+ * @see https://github.com/fsans/FM-ODATA_SPEC/blob/main/docs/13-quirks.md
  */
 
 /** Any value that can appear on the right-hand side of an OData `$filter` comparison. */

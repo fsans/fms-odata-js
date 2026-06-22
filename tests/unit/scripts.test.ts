@@ -239,3 +239,80 @@ describe('script plumbing', () => {
     await expect(db.script('Ping', { signal: ctrl.signal })).rejects.toThrow(/abort/i)
   })
 })
+
+// ---------------------------------------------------------------------------
+// FMSID-based script invocation (Phase 3 — requires FMS 26+)
+// ---------------------------------------------------------------------------
+
+describe('FMOData#scriptById (FMSID, database scope)', () => {
+  it('POSTs to /<db>/Script.FMSID:<id> with no body when parameter is omitted', async () => {
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValue(jsonResponse({ scriptResult: 'pong', scriptError: '0' }))
+    const db = makeClient(fetchMock)
+
+    const result = await db.scriptById(42)
+
+    expect(result.scriptResult).toBe('pong')
+    expect(result.scriptError).toBe('0')
+
+    const [url, init] = fetchMock.mock.calls[0]!
+    expect(url).toBe(`${BASE}/Script.FMSID:42`)
+    expect((init as RequestInit).method).toBe('POST')
+    expect((init as RequestInit).body).toBeUndefined()
+  })
+
+  it('sends { scriptParameter } as JSON when parameter is provided', async () => {
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValue(jsonResponse({ scriptResult: 'ok', scriptError: '0' }))
+    const db = makeClient(fetchMock)
+
+    await db.scriptById(42, { parameter: 'hello' })
+
+    const [url, init] = fetchMock.mock.calls[0]!
+    expect(url).toBe(`${BASE}/Script.FMSID:42`)
+    expect((init as RequestInit).body).toBe(JSON.stringify({ scriptParameter: 'hello' }))
+    const headers = (init as RequestInit).headers as Headers
+    expect(headers.get('content-type')).toBe('application/json')
+  })
+
+  it('throws FMScriptError on non-zero scriptError', async () => {
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValue(jsonResponse({ scriptResult: '', scriptError: '101' }))
+    const db = makeClient(fetchMock)
+
+    await expect(db.scriptById(42)).rejects.toBeInstanceOf(FMScriptError)
+  })
+})
+
+describe('ScriptInvoker FMSID URLs', () => {
+  it('urlById builds database-scope URL', async () => {
+    const { ScriptInvoker } = await import('../../src/scripts.js')
+    const db = makeClient(vi.fn())
+    const inv = new ScriptInvoker(db)
+    expect(inv.urlById(42)).toBe(`${BASE}/Script.FMSID:42`)
+  })
+
+  it('urlById builds entity-set scope URL', async () => {
+    const { ScriptInvoker } = await import('../../src/scripts.js')
+    const db = makeClient(vi.fn())
+    const inv = new ScriptInvoker(db, { entitySet: 'contact' })
+    expect(inv.urlById(42)).toBe(`${BASE}/contact/Script.FMSID:42`)
+  })
+
+  it('urlById builds record-scope URL', async () => {
+    const { ScriptInvoker } = await import('../../src/scripts.js')
+    const db = makeClient(vi.fn())
+    const inv = new ScriptInvoker(db, { entitySet: 'contact', key: 7 })
+    expect(inv.urlById(42)).toBe(`${BASE}/contact(7)/Script.FMSID:42`)
+  })
+
+  it('urlById throws on non-finite id', async () => {
+    const { ScriptInvoker } = await import('../../src/scripts.js')
+    const db = makeClient(vi.fn())
+    const inv = new ScriptInvoker(db)
+    expect(() => inv.urlById(Number.NaN)).toThrow(/fmsid/)
+  })
+})

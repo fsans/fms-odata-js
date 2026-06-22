@@ -48,6 +48,8 @@ export interface ODataMetadata {
     entityTypes: EdmEntityType[];
     entitySets: EdmEntitySet[];
     actions: EdmAction[];
+    /** Product version string extracted from Org.OData.Core.V1.ProductVersion annotation (if present). */
+    productVersion?: string;
     /** Original XML, for debugging and forward compatibility. */
     raw: string;
 }

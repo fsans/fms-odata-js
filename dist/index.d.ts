@@ -4,15 +4,20 @@ export type { BatchHandle, BatchOpResult, BatchReadOp, BatchResult, } from './ba
 export { buildContainerJsonBody, ContainerRef, FM_CONTAINER_SUPPORTED_MIME_TYPES, sniffContainerMime, toBase64, } from './containers.js';
 export type { ContainerDownload, ContainerJsonValue, ContainerUploadInput, FMContainerMimeType, } from './containers.js';
 export { EntityRef } from './entity.js';
-export type { EntityWriteOptions } from './entity.js';
-export { FMODataError, FMScriptError } from './errors.js';
-export { basicAuth } from './http.js';
+export type { EntityWriteOptions, EntityRefInfo } from './entity.js';
+export { FMODataError, FMScriptError, isFMODataError, isFMScriptError } from './errors.js';
+export type { ODataErrorBody } from './errors.js';
+export { basicAuth, fmidAuth } from './http.js';
+export type { FMAuthScheme, FMAuthToken, FMAuthTokenProvider } from './http.js';
 export { MetadataFetcher } from './metadata.js';
 export type { EdmAction, EdmEntitySet, EdmEntityType, EdmProperty, MetadataOptions, ODataMetadata, } from './metadata.js';
 export { Filter, Query, filterFactory } from './query.js';
 export type { FilterFactory, FilterInput, OrderDir, QueryResult } from './query.js';
+export type { AggregateFunction } from '@fm-odata/spec-ts';
 export { ScriptInvoker } from './scripts.js';
-export type { ScriptOptions, ScriptResult, ScriptScope } from './scripts.js';
+export type { ScriptOptions, ScriptResult, ScriptScope, ScriptIdentifier } from './scripts.js';
 export type { FMODataOptions, TokenProvider, RequestOptions } from './types.js';
 export type { ODataLiteral } from './url.js';
+export { FM_VERSION_NAMES, FM_VERSION_MATRIX, ODATA_PROTOCOL_VERSION, hasFeature, hasQueryOption, minVersionForFeature, } from '@fm-odata/spec-ts';
+export type { FMVersionMajor, FMVersionStatus, FMFeatureFlags, FMQueryOptionFlags, FMVersionInfo, } from '@fm-odata/spec-ts';
 //# sourceMappingURL=index.d.ts.map

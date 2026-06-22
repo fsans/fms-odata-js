@@ -269,3 +269,78 @@ describe('Filter class directly', () => {
     expect(new Filter('a eq 1').or('b eq 2').expr).toBe('(a eq 1) or (b eq 2)')
   })
 })
+
+// ---------------------------------------------------------------------------
+// $apply (aggregation) — Phase 3
+// ---------------------------------------------------------------------------
+
+describe('Query $apply', () => {
+  it('apply() sets a raw $apply expression', () => {
+    const url = q('orders').apply('aggregate(total with sum as totalSum)').toURL()
+    const params = decodedParams(url)
+    expect(params['$apply']).toBe('aggregate(total with sum as totalSum)')
+  })
+
+  it('aggregate() builds aggregate expression for a single field', () => {
+    const url = q('orders')
+      .aggregate([{ field: 'total', function: 'sum', alias: 'totalSum' }])
+      .toURL()
+    const params = decodedParams(url)
+    expect(params['$apply']).toBe('aggregate(total with sum as totalSum)')
+  })
+
+  it('aggregate() builds expression for multiple aggregations', () => {
+    const url = q('orders')
+      .aggregate([
+        { field: 'total', function: 'sum', alias: 'totalSum' },
+        { field: 'total', function: 'max', alias: 'maxTotal' },
+        { field: 'id', function: 'countdistinct', alias: 'orderCount' },
+      ])
+      .toURL()
+    const params = decodedParams(url)
+    expect(params['$apply']).toBe(
+      'aggregate(total with sum as totalSum,total with max as maxTotal,id with countdistinct as orderCount)',
+    )
+  })
+
+  it('groupBy() builds groupby expression with aggregation', () => {
+    const url = q('orders')
+      .groupBy(
+        ['customerId'],
+        [{ field: 'total', function: 'sum', alias: 'totalSum' }],
+      )
+      .toURL()
+    const params = decodedParams(url)
+    expect(params['$apply']).toBe(
+      'groupby((customerId),aggregate(total with sum as totalSum))',
+    )
+  })
+
+  it('groupBy() builds groupby expression without aggregation', () => {
+    const url = q('orders').groupBy(['customerId', 'status']).toURL()
+    const params = decodedParams(url)
+    expect(params['$apply']).toBe('groupby((customerId,status))')
+  })
+
+  it('groupBy() supports multiple group fields and multiple aggregates', () => {
+    const url = q('orders')
+      .groupBy(
+        ['region', 'status'],
+        [
+          { field: 'total', function: 'sum', alias: 'totalSum' },
+          { field: 'total', function: 'average', alias: 'avgTotal' },
+        ],
+      )
+      .toURL()
+    const params = decodedParams(url)
+    expect(params['$apply']).toBe(
+      'groupby((region,status),aggregate(total with sum as totalSum,total with average as avgTotal))',
+    )
+  })
+
+  it('$apply is not set when no apply method is called', () => {
+    const url = q('orders').select('id').toURL()
+    const params = decodedParams(url)
+    expect('$apply' in params).toBe(false)
+  })
+})

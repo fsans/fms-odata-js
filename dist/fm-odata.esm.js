@@ -54,9 +54,15 @@ var FMScriptError = class extends FMODataError {
     if (init.scriptResult !== void 0) this.scriptResult = init.scriptResult;
   }
 };
+function isFMODataError(err) {
+  return err instanceof FMODataError;
+}
+function isFMScriptError(err) {
+  return err instanceof FMScriptError;
+}
 
 // src/http.ts
-var AUTH_SCHEME_RE = /^(basic|bearer|negotiate|digest)\s+\S/i;
+var AUTH_SCHEME_RE = /^(basic|bearer|fmid|negotiate|digest)\s+\S/i;
 async function resolveAuthHeader(provider) {
   const raw = typeof provider === "function" ? await provider() : provider;
   if (typeof raw !== "string" || raw.length === 0) {
@@ -68,6 +74,9 @@ function basicAuth(user, password) {
   const raw = `${user}:${password}`;
   const b64 = typeof Buffer !== "undefined" ? Buffer.from(raw, "utf8").toString("base64") : btoa(unescape(encodeURIComponent(raw)));
   return `Basic ${b64}`;
+}
+function fmidAuth(token) {
+  return `FMID ${token}`;
 }
 function combineSignals(signals) {
   const filtered = signals.filter((s) => s !== void 0);
@@ -613,6 +622,17 @@ function parseEntitySet(xml) {
     entityType: attrs.EntityType ?? ""
   };
 }
+function extractProductVersion(xml) {
+  const attrMatch = xml.match(
+    /<Annotation\s+Term="Org\.OData\.Core\.V1\.ProductVersion"\s+String="([^"]+)"/i
+  );
+  if (attrMatch?.[1]) return attrMatch[1];
+  const childMatch = xml.match(
+    /<Annotation\s+Term="Org\.OData\.Core\.V1\.ProductVersion"[^>]*>\s*<String>([^<]+)<\/String>/i
+  );
+  if (childMatch?.[1]) return childMatch[1].trim();
+  return void 0;
+}
 function parseAction(xml) {
   const name = getAttr(xml, "Name") ?? "";
   const attrs = getAttrs(xml);
@@ -656,13 +676,16 @@ function parseMetadata(xml) {
     for (const a of findElements(schemaInner, "Action")) {
       actions.push(parseAction(a));
     }
-    return {
+    const productVersion = extractProductVersion(xml);
+    const result = {
       namespace,
       entityTypes,
       entitySets,
       actions,
       raw: xml
     };
+    if (productVersion !== void 0) result.productVersion = productVersion;
+    return result;
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err);
     throw new FMODataError(`Failed to parse $metadata: ${message}`, {
@@ -970,8 +993,16 @@ var ScriptInvoker = class {
   /** Build the absolute URL for invoking `name` at this scope. */
   url(name) {
     if (!name) throw new TypeError("ScriptInvoker: script name is required");
+    return this._urlForSegment(`Script.${encodePathSegment(name)}`);
+  }
+  /** Build the absolute URL for invoking by FMSID at this scope. */
+  urlById(fmsid) {
+    if (!Number.isFinite(fmsid)) throw new TypeError("ScriptInvoker: fmsid must be a finite number");
+    return this._urlForSegment(`Script.FMSID:${fmsid}`);
+  }
+  /** @internal — build URL from a script path segment. */
+  _urlForSegment(scriptSegment) {
     const base = this._client.baseUrl;
-    const scriptSegment = `Script.${encodePathSegment(name)}`;
     if (this.entitySet === void 0) {
       return `${base}/${scriptSegment}`;
     }
@@ -981,9 +1012,25 @@ var ScriptInvoker = class {
     }
     return `${base}/${setSegment}(${formatKey(this.key)})/${scriptSegment}`;
   }
-  /** Invoke the script. Resolves to a `ScriptResult` on success. */
+  /** Invoke the script by name. Resolves to a `ScriptResult` on success. */
   async run(name, opts = {}) {
-    const url = this.url(name);
+    return this._runAtUrl(this.url(name), opts);
+  }
+  /**
+   * Invoke the script by its immutable FMSID.
+   *
+   * Requires FileMaker Server 2026+ (v26). Use `db.hasFeature('scriptsByFMSID')`
+   * to check before calling.
+   *
+   * ```ts
+   * const result = await db.scriptById(42, { parameter: 'hello' })
+   * ```
+   */
+  async runById(fmsid, opts = {}) {
+    return this._runAtUrl(this.urlById(fmsid), opts);
+  }
+  /** @internal — execute a script POST at the given URL. */
+  async _runAtUrl(url, opts) {
     const headers = {};
     let body;
     if (opts.parameter !== void 0) {
@@ -1039,6 +1086,9 @@ function extractEnvelope(raw) {
 }
 function runScriptAtDatabase(client, name, opts) {
   return new ScriptInvoker(client).run(name, opts);
+}
+function runScriptByIdAtDatabase(client, fmsid, opts) {
+  return new ScriptInvoker(client).runById(fmsid, opts);
 }
 function runScriptAtEntitySet(client, entitySet, name, opts) {
   return new ScriptInvoker(client, { entitySet }).run(name, opts);
@@ -1174,6 +1224,121 @@ var EntityRef = class {
       ...opts.signal ? { signal: opts.signal } : {}
     });
   }
+  // -------------------------------------------------------------------------
+  // Record references ($ref) — OData standard, supported since FMS 19
+  // -------------------------------------------------------------------------
+  /**
+   * Get the references for a navigation property on this record.
+   *
+   * `GET /<EntitySet>(<key>)/<navProperty>/$ref`
+   *
+   * Returns an array of entity references. For a single-valued navigation
+   * property, the array has at most one element.
+   *
+   * @example
+   * ```ts
+   * const refs = await db.from('contact').byKey(7).getRefs('addresses')
+   * // [{ '@odata.id': 'https://fms.example.com/fmi/odata/v4/DB/address(1)' }, ...]
+   * ```
+   */
+  async getRefs(navProperty, opts = {}) {
+    const url = `${this.toURL()}/${encodePathSegment(navProperty)}/$ref`;
+    const json = await executeJson(
+      this._client._ctx,
+      url,
+      {
+        method: "GET",
+        accept: "json",
+        ...opts.signal ? { signal: opts.signal } : {}
+      }
+    );
+    if (json?.value) return json.value;
+    if (json?.["@odata.id"]) return [json];
+    return [];
+  }
+  /**
+   * Add a reference to a related record via a navigation property.
+   *
+   * `POST /<EntitySet>(<key>)/<navProperty>/$ref`
+   *
+   * For single-valued navigation properties, use `setRef()` instead (PATCH).
+   *
+   * @example
+   * ```ts
+   * await db.from('contact').byKey(7).addRef('addresses', 42)
+   * ```
+   */
+  async addRef(navProperty, relatedKey, opts = {}) {
+    const url = `${this.toURL()}/${encodePathSegment(navProperty)}/$ref`;
+    const headers = { "Content-Type": "application/json" };
+    if (opts.ifMatch) headers["If-Match"] = opts.ifMatch;
+    const body = JSON.stringify({ "@odata.id": this._refId(navProperty, relatedKey) });
+    await executeRequest(this._client._ctx, url, {
+      method: "POST",
+      headers,
+      body,
+      accept: "none",
+      ...opts.signal ? { signal: opts.signal } : {}
+    });
+  }
+  /**
+   * Set (replace) the reference for a single-valued navigation property.
+   *
+   * `PATCH /<EntitySet>(<key>)/<navProperty>/$ref`
+   *
+   * @example
+   * ```ts
+   * await db.from('order').byKey(100).setRef('customer', 7)
+   * ```
+   */
+  async setRef(navProperty, relatedKey, opts = {}) {
+    const url = `${this.toURL()}/${encodePathSegment(navProperty)}/$ref`;
+    const headers = { "Content-Type": "application/json" };
+    if (opts.ifMatch) headers["If-Match"] = opts.ifMatch;
+    const body = JSON.stringify({ "@odata.id": this._refId(navProperty, relatedKey) });
+    await executeRequest(this._client._ctx, url, {
+      method: "PATCH",
+      headers,
+      body,
+      accept: "none",
+      ...opts.signal ? { signal: opts.signal } : {}
+    });
+  }
+  /**
+   * Remove a reference from a navigation property.
+   *
+   * `DELETE /<EntitySet>(<key>)/<navProperty>/$ref`
+   *
+   * For collection-valued navigation properties, pass the `relatedKey` to
+   * remove a specific reference. For single-valued, omit `relatedKey` to
+   * clear the reference.
+   *
+   * @example
+   * ```ts
+   * await db.from('contact').byKey(7).removeRef('addresses', 42)
+   * await db.from('order').byKey(100).removeRef('customer')
+   * ```
+   */
+  async removeRef(navProperty, relatedKey, opts = {}) {
+    let url = `${this.toURL()}/${encodePathSegment(navProperty)}/$ref`;
+    const headers = {};
+    if (opts.ifMatch) headers["If-Match"] = opts.ifMatch;
+    if (relatedKey !== void 0) {
+      url += `('${escapeStringLiteral(this._refId(navProperty, relatedKey))}')`;
+    }
+    await executeRequest(this._client._ctx, url, {
+      method: "DELETE",
+      headers,
+      accept: "none",
+      ...opts.signal ? { signal: opts.signal } : {}
+    });
+  }
+  /** @internal — build a relative @odata.id for a related entity. */
+  _refId(navProperty, relatedKey) {
+    const navSet = navProperty;
+    if (typeof relatedKey === "number") return `${navSet}(${relatedKey})`;
+    return `${navSet}('${escapeStringLiteral(relatedKey)}')`;
+  }
 };
 
 // src/query.ts
@@ -1273,6 +1438,71 @@ var Query = class _Query {
   }
   search(term) {
     this._state.search = term;
+    return this;
+  }
+  // -------------------------------------------------------------------------
+  // $apply (aggregation) — requires FMS 22.0.1+ (FileMaker 2024)
+  // -------------------------------------------------------------------------
+  /**
+   * Set a raw `$apply` expression. Use this for advanced transformations
+   * that the `aggregate()` / `groupBy()` helpers don't cover.
+   *
+   * Requires FileMaker Server 2024+ (v22). Use `db.hasFeature('applyAggregation')`
+   * to check before calling.
+   *
+   * @example
+   * ```ts
+   * const result = await db.from('orders').apply('aggregate(total with sum as totalSum)')
+   *   .get()
+   * ```
+   */
+  apply(expr) {
+    this._state.apply = expr;
+    return this;
+  }
+  /**
+   * Aggregate the entity set. Produces a `$apply=aggregate(...)` expression.
+   *
+   * Requires FileMaker Server 2024+ (v22).
+   *
+   * @example
+   * ```ts
+   * const result = await db.from('orders')
+   *   .aggregate([{ field: 'total', function: 'sum', alias: 'totalSum' }])
+   *   .get()
+   * // $apply=aggregate(total with sum as totalSum)
+   * ```
+   */
+  aggregate(expressions) {
+    const parts = expressions.map((e) => `${e.field} with ${e.function} as ${e.alias}`);
+    this._state.apply = `aggregate(${parts.join(",")})`;
+    return this;
+  }
+  /**
+   * Group the entity set by one or more fields, optionally with aggregation.
+   * Produces a `$apply=groupby((fields), aggregate(...))` expression.
+   *
+   * Requires FileMaker Server 2024+ (v22).
+   *
+   * @example
+   * ```ts
+   * const result = await db.from('orders')
+   *   .groupBy(
+   *     ['customerId'],
+   *     [{ field: 'total', function: 'sum', alias: 'totalSum' }],
+   *   )
+   *   .get()
+   * // $apply=groupby((customerId),aggregate(total with sum as totalSum))
+   * ```
+   */
+  groupBy(fields, aggregateExpressions) {
+    const fieldList = fields.join(",");
+    if (aggregateExpressions && aggregateExpressions.length > 0) {
+      const aggParts = aggregateExpressions.map((e) => `${e.field} with ${e.function} as ${e.alias}`);
+      this._state.apply = `groupby((${fieldList}),aggregate(${aggParts.join(",")}))`;
+    } else {
+      this._state.apply = `groupby((${fieldList}))`;
+    }
     return this;
   }
   /** Build the absolute request URL for this query. */
@@ -1398,8 +1628,275 @@ function serializeOptions(s, opts) {
   if (s.skip !== void 0) pairs.push(["$skip", String(s.skip)]);
   if (s.count) pairs.push(["$count", "true"]);
   if (s.search) pairs.push(["$search", s.search]);
+  if (s.apply) pairs.push(["$apply", s.apply]);
   if (opts.topLevel) return buildQueryString(pairs);
   return pairs.map(([k, v]) => `${k}=${v}`).join(";");
+}
+
+// node_modules/@fm-odata/spec-ts/dist/versions.js
+var FM_VERSION_NAMES = {
+  "19": "FileMaker 19.x",
+  "21": "Claris FileMaker 2023",
+  "22": "Claris FileMaker 2024",
+  "26": "Claris FileMaker 2026",
+  future: "Future / next"
+};
+var ODATA_PROTOCOL_VERSION = "4.0";
+var FM_VERSION_MATRIX = {
+  "19": {
+    major: "19",
+    name: "FileMaker 19.x",
+    releaseYear: null,
+    internalVersion: "19.x",
+    status: "baseline",
+    features: {
+      serviceDocument: true,
+      metadata: true,
+      databaseListing: true,
+      tableListing: true,
+      recordCRUD: true,
+      recordReferences: true,
+      crossJoin: true,
+      batch: true,
+      scripts: true,
+      scriptsByFMSID: false,
+      scriptListing: false,
+      containerBinaryUpload: true,
+      containerBase64Upload: true,
+      containerDownload: true,
+      schemaModification: true,
+      webhooks: false,
+      webhookQueryHeaders: false,
+      applyAggregation: false,
+      typeCasting: false,
+      parameterizedFilters: false,
+      immutableIdUrls: false,
+      aiAnnotation: false,
+      serverVersionAnnotation: false,
+      enrichedFMComment: false,
+      authBasic: true,
+      authFMID: false,
+      authOAuth: false
+    },
+    queryOptions: {
+      $filter: true,
+      $select: true,
+      $orderby: true,
+      $top: true,
+      $skip: true,
+      $expand: true,
+      $count: true,
+      $apply: false,
+      $search: false,
+      $compute: false
+    }
+  },
+  "21": {
+    major: "21",
+    name: "Claris FileMaker 2023",
+    releaseYear: 2023,
+    internalVersion: "21.x",
+    status: "supported",
+    features: {
+      serviceDocument: true,
+      metadata: true,
+      databaseListing: true,
+      tableListing: true,
+      recordCRUD: true,
+      recordReferences: true,
+      crossJoin: true,
+      batch: true,
+      scripts: true,
+      scriptsByFMSID: false,
+      scriptListing: false,
+      containerBinaryUpload: true,
+      containerBase64Upload: true,
+      containerDownload: true,
+      schemaModification: true,
+      webhooks: true,
+      webhookQueryHeaders: false,
+      applyAggregation: false,
+      typeCasting: true,
+      parameterizedFilters: true,
+      immutableIdUrls: false,
+      aiAnnotation: false,
+      serverVersionAnnotation: false,
+      enrichedFMComment: false,
+      authBasic: true,
+      authFMID: true,
+      authOAuth: true
+    },
+    queryOptions: {
+      $filter: true,
+      $select: true,
+      $orderby: true,
+      $top: true,
+      $skip: true,
+      $expand: true,
+      $count: true,
+      $apply: false,
+      $search: false,
+      $compute: false
+    }
+  },
+  "22": {
+    major: "22",
+    name: "Claris FileMaker 2024",
+    releaseYear: 2024,
+    internalVersion: "22.x",
+    status: "supported",
+    features: {
+      serviceDocument: true,
+      metadata: true,
+      databaseListing: true,
+      tableListing: true,
+      recordCRUD: true,
+      recordReferences: true,
+      crossJoin: true,
+      batch: true,
+      scripts: true,
+      scriptsByFMSID: false,
+      scriptListing: false,
+      containerBinaryUpload: true,
+      containerBase64Upload: true,
+      containerDownload: true,
+      schemaModification: true,
+      webhooks: true,
+      webhookQueryHeaders: true,
+      applyAggregation: true,
+      typeCasting: true,
+      parameterizedFilters: true,
+      immutableIdUrls: false,
+      aiAnnotation: false,
+      serverVersionAnnotation: false,
+      enrichedFMComment: false,
+      authBasic: true,
+      authFMID: true,
+      authOAuth: true
+    },
+    queryOptions: {
+      $filter: true,
+      $select: true,
+      $orderby: true,
+      $top: true,
+      $skip: true,
+      $expand: true,
+      $count: true,
+      $apply: true,
+      $search: false,
+      $compute: false
+    }
+  },
+  "26": {
+    major: "26",
+    name: "Claris FileMaker 2026",
+    releaseYear: 2026,
+    internalVersion: "26.x",
+    status: "current",
+    features: {
+      serviceDocument: true,
+      metadata: true,
+      databaseListing: true,
+      tableListing: true,
+      recordCRUD: true,
+      recordReferences: true,
+      crossJoin: true,
+      batch: true,
+      scripts: true,
+      scriptsByFMSID: true,
+      scriptListing: true,
+      containerBinaryUpload: true,
+      containerBase64Upload: true,
+      containerDownload: true,
+      schemaModification: true,
+      webhooks: true,
+      webhookQueryHeaders: true,
+      applyAggregation: true,
+      typeCasting: true,
+      parameterizedFilters: true,
+      immutableIdUrls: true,
+      aiAnnotation: true,
+      serverVersionAnnotation: true,
+      enrichedFMComment: true,
+      authBasic: true,
+      authFMID: true,
+      authOAuth: true
+    },
+    queryOptions: {
+      $filter: true,
+      $select: true,
+      $orderby: true,
+      $top: true,
+      $skip: true,
+      $expand: true,
+      $count: true,
+      $apply: true,
+      $search: false,
+      $compute: false
+    }
+  },
+  future: {
+    major: "future",
+    name: "Future / next",
+    releaseYear: null,
+    internalVersion: "unknown",
+    status: "future",
+    features: {
+      serviceDocument: true,
+      metadata: true,
+      databaseListing: true,
+      tableListing: true,
+      recordCRUD: true,
+      recordReferences: true,
+      crossJoin: true,
+      batch: true,
+      scripts: true,
+      scriptsByFMSID: true,
+      scriptListing: true,
+      containerBinaryUpload: true,
+      containerBase64Upload: true,
+      containerDownload: true,
+      schemaModification: true,
+      webhooks: true,
+      webhookQueryHeaders: true,
+      applyAggregation: true,
+      typeCasting: true,
+      parameterizedFilters: true,
+      immutableIdUrls: true,
+      aiAnnotation: true,
+      serverVersionAnnotation: true,
+      enrichedFMComment: true,
+      authBasic: true,
+      authFMID: true,
+      authOAuth: true
+    },
+    queryOptions: {
+      $filter: true,
+      $select: true,
+      $orderby: true,
+      $top: true,
+      $skip: true,
+      $expand: true,
+      $count: true,
+      $apply: true,
+      $search: false,
+      $compute: false
+    }
+  }
+};
+function hasFeature(version, feature) {
+  return FM_VERSION_MATRIX[version]?.features[feature] ?? false;
+}
+function hasQueryOption(version, option) {
+  return FM_VERSION_MATRIX[version]?.queryOptions[option] ?? false;
+}
+function minVersionForFeature(feature) {
+  const order = ["19", "21", "22", "26"];
+  for (const v of order) {
+    if (FM_VERSION_MATRIX[v].features[feature])
+      return v;
+  }
+  return null;
 }
 
 // src/client.ts
@@ -1461,6 +1958,21 @@ var FMOData = class {
     return runScriptAtDatabase(this, name, opts);
   }
   /**
+   * Invoke a FileMaker script by its immutable FMSID.
+   *
+   * Requires FileMaker Server 2026+ (v26). Use `hasFeature('scriptsByFMSID')`
+   * to check before calling. FMSID-based invocation is more stable than
+   * name-based: it survives script renames and works across database
+   * migrations.
+   *
+   * ```ts
+   * const result = await db.scriptById(42, { parameter: 'hello' })
+   * ```
+   */
+  async scriptById(fmsid, opts = {}) {
+    return runScriptByIdAtDatabase(this, fmsid, opts);
+  }
+  /**
    * Fetch the OData CSDL `$metadata` XML and parse it into a typed structure.
    * Results are cached; pass `refresh: true` to force a refetch.
    *
@@ -1483,6 +1995,78 @@ var FMOData = class {
       this._metadataFetcher = new MetadataFetcher(this._ctx, this.baseUrl);
     }
     return this._metadataFetcher.fetchXml(opts);
+  }
+  /**
+   * Detect the FileMaker Server major version by fetching `$metadata` and
+   * extracting the `Org.OData.Core.V1.ProductVersion` annotation. The result
+   * is cached for the lifetime of this `FMOData` instance.
+   *
+   * Returns the major version string (`'19'`, `'21'`, `'22'`, `'26'`) or
+   * `'future'` if the version is newer than the spec knows about. Returns
+   * `null` if the version cannot be determined (e.g. the metadata lacks the
+   * annotation).
+   *
+   * ```ts
+   * const v = await db.version()
+   * if (v === '26') console.log('Server is FileMaker 2026')
+   * ```
+   */
+  async version() {
+    if (this._detectedVersion !== void 0) return this._detectedVersion;
+    try {
+      const meta = await this.metadata();
+      const raw = meta.productVersion;
+      if (!raw) {
+        this._detectedVersion = null;
+        return null;
+      }
+      const match = raw.match(/^(\d+)\./);
+      if (!match) {
+        this._detectedVersion = null;
+        return null;
+      }
+      const major = match[1];
+      this._detectedVersion = major in FM_VERSION_MATRIX ? major : "future";
+      return this._detectedVersion;
+    } catch {
+      this._detectedVersion = null;
+      return null;
+    }
+  }
+  /**
+   * Get the full version info (feature flags + query option flags) for the
+   * detected server version. Fetches metadata if not already cached.
+   *
+   * Returns `null` if the version cannot be determined.
+   *
+   * ```ts
+   * const info = await db.versionInfo()
+   * if (info?.features.applyAggregation) {
+   *   // Server supports $apply
+   * }
+   * ```
+   */
+  async versionInfo() {
+    const v = await this.version();
+    if (!v) return null;
+    return FM_VERSION_MATRIX[v];
+  }
+  /**
+   * Check if the server supports a specific feature. Fetches metadata (to
+   * detect the version) on first call; subsequent calls use the cached result.
+   *
+   * Returns `false` if the version cannot be determined.
+   *
+   * ```ts
+   * if (await db.hasFeature('applyAggregation')) {
+   *   const result = await db.from('orders').apply(...)
+   * }
+   * ```
+   */
+  async hasFeature(feature) {
+    const v = await this.version();
+    if (!v) return false;
+    return hasFeature(v, feature);
   }
   /**
    * Create a new `$batch` builder for composing multiple OData operations
@@ -1521,13 +2105,22 @@ export {
   FMODataError,
   FMScriptError,
   FM_CONTAINER_SUPPORTED_MIME_TYPES,
+  FM_VERSION_MATRIX,
+  FM_VERSION_NAMES,
   Filter,
   MetadataFetcher,
+  ODATA_PROTOCOL_VERSION,
   Query,
   ScriptInvoker,
   basicAuth,
   buildContainerJsonBody,
   filterFactory,
+  fmidAuth,
+  hasFeature,
+  hasQueryOption,
+  isFMODataError,
+  isFMScriptError,
+  minVersionForFeature,
   sniffContainerMime,
   toBase64
 };

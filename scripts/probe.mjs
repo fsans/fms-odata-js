@@ -1,7 +1,8 @@
 #!/usr/bin/env node
 // Connectivity probe: mint an FMS Data API bearer token with the credentials
 // in `.env`, then hit the OData `$metadata` endpoint to confirm the connection
-// works. Respects FM_ODATA_INSECURE_TLS=1 for self-signed certs.
+// works. Respects FM_VERIFY_SSL=0 (or legacy FM_ODATA_INSECURE_TLS=1) for
+// self-signed certs.
 //
 // Usage: npm run probe
 

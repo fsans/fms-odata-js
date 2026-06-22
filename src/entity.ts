@@ -194,5 +194,141 @@ export class EntityRef<T = Record<string, unknown>> {
       ...(opts.signal ? { signal: opts.signal } : {}),
     })
   }
+
+  // -------------------------------------------------------------------------
+  // Record references ($ref) — OData standard, supported since FMS 19
+  // -------------------------------------------------------------------------
+
+  /**
+   * Get the references for a navigation property on this record.
+   *
+   * `GET /<EntitySet>(<key>)/<navProperty>/$ref`
+   *
+   * Returns an array of entity references. For a single-valued navigation
+   * property, the array has at most one element.
+   *
+   * @example
+   * ```ts
+   * const refs = await db.from('contact').byKey(7).getRefs('addresses')
+   * // [{ '@odata.id': 'https://fms.example.com/fmi/odata/v4/DB/address(1)' }, ...]
+   * ```
+   */
+  async getRefs(navProperty: string, opts: RequestOptions = {}): Promise<EntityRefInfo[]> {
+    const url = `${this.toURL()}/${encodePathSegment(navProperty)}/$ref`
+    const json = await executeJson<{ value?: EntityRefInfo[]; '@odata.id'?: string }>(
+      this._client._ctx,
+      url,
+      {
+        method: 'GET',
+        accept: 'json',
+        ...(opts.signal ? { signal: opts.signal } : {}),
+      },
+    )
+    // Single-valued nav properties return { "@odata.id": "..." } directly;
+    // collection nav properties return { value: [{ "@odata.id": "..." }, ...] }
+    if (json?.value) return json.value
+    if (json?.['@odata.id']) return [json as EntityRefInfo]
+    return []
+  }
+
+  /**
+   * Add a reference to a related record via a navigation property.
+   *
+   * `POST /<EntitySet>(<key>)/<navProperty>/$ref`
+   *
+   * For single-valued navigation properties, use `setRef()` instead (PATCH).
+   *
+   * @example
+   * ```ts
+   * await db.from('contact').byKey(7).addRef('addresses', 42)
+   * ```
+   */
+  async addRef(navProperty: string, relatedKey: string | number, opts: EntityWriteOptions = {}): Promise<void> {
+    const url = `${this.toURL()}/${encodePathSegment(navProperty)}/$ref`
+    const headers: Record<string, string> = { 'Content-Type': 'application/json' }
+    if (opts.ifMatch) headers['If-Match'] = opts.ifMatch
+
+    const body = JSON.stringify({ '@odata.id': this._refId(navProperty, relatedKey) })
+    await executeRequest(this._client._ctx, url, {
+      method: 'POST',
+      headers,
+      body,
+      accept: 'none',
+      ...(opts.signal ? { signal: opts.signal } : {}),
+    })
+  }
+
+  /**
+   * Set (replace) the reference for a single-valued navigation property.
+   *
+   * `PATCH /<EntitySet>(<key>)/<navProperty>/$ref`
+   *
+   * @example
+   * ```ts
+   * await db.from('order').byKey(100).setRef('customer', 7)
+   * ```
+   */
+  async setRef(navProperty: string, relatedKey: string | number, opts: EntityWriteOptions = {}): Promise<void> {
+    const url = `${this.toURL()}/${encodePathSegment(navProperty)}/$ref`
+    const headers: Record<string, string> = { 'Content-Type': 'application/json' }
+    if (opts.ifMatch) headers['If-Match'] = opts.ifMatch
+
+    const body = JSON.stringify({ '@odata.id': this._refId(navProperty, relatedKey) })
+    await executeRequest(this._client._ctx, url, {
+      method: 'PATCH',
+      headers,
+      body,
+      accept: 'none',
+      ...(opts.signal ? { signal: opts.signal } : {}),
+    })
+  }
+
+  /**
+   * Remove a reference from a navigation property.
+   *
+   * `DELETE /<EntitySet>(<key>)/<navProperty>/$ref`
+   *
+   * For collection-valued navigation properties, pass the `relatedKey` to
+   * remove a specific reference. For single-valued, omit `relatedKey` to
+   * clear the reference.
+   *
+   * @example
+   * ```ts
+   * await db.from('contact').byKey(7).removeRef('addresses', 42)
+   * await db.from('order').byKey(100).removeRef('customer')
+   * ```
+   */
+  async removeRef(navProperty: string, relatedKey?: string | number, opts: EntityWriteOptions = {}): Promise<void> {
+    let url = `${this.toURL()}/${encodePathSegment(navProperty)}/$ref`
+    const headers: Record<string, string> = {}
+    if (opts.ifMatch) headers['If-Match'] = opts.ifMatch
+
+    if (relatedKey !== undefined) {
+      // For collection nav properties, target the specific reference by ID
+      url += `('${escapeStringLiteral(this._refId(navProperty, relatedKey))}')`
+    }
+
+    await executeRequest(this._client._ctx, url, {
+      method: 'DELETE',
+      headers,
+      accept: 'none',
+      ...(opts.signal ? { signal: opts.signal } : {}),
+    })
+  }
+
+  /** @internal — build a relative @odata.id for a related entity. */
+  private _refId(navProperty: string, relatedKey: string | number): string {
+    // The @odata.id can be a relative URL or a full URL. We use a relative
+    // form that's portable across deployments: just the entity set name and key.
+    // FMS resolves this relative to the service root.
+    const navSet = navProperty // The navigation property name typically matches the target entity set
+    if (typeof relatedKey === 'number') return `${navSet}(${relatedKey})`
+    return `${navSet}('${escapeStringLiteral(relatedKey)}')`
+  }
+}
+
+/** Entity reference info returned by `getRefs()`. */
+export interface EntityRefInfo {
+  '@odata.id': string
 }
 

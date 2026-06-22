@@ -12,6 +12,7 @@ import { EntityRef } from './entity.js';
 import { type ScriptOptions, type ScriptResult } from './scripts.js';
 import type { RequestOptions } from './types.js';
 import { type ODataLiteral } from './url.js';
+import type { AggregateFunction } from '@fm-odata/spec-ts';
 /**
  * Opaque filter expression produced by `filterFactory`. Use `.and()`, `.or()`,
  * `.not()` to compose; pass to `Query#filter`.
@@ -62,6 +63,7 @@ export interface QueryOptionsState {
     skip?: number;
     count?: boolean;
     search?: string;
+    apply?: string;
 }
 /**
  * Fluent query builder. Methods mutate and return `this` for chaining.
@@ -89,6 +91,60 @@ export declare class Query<T = Record<string, unknown>> {
     skip(n: number): this;
     count(enabled?: boolean): this;
     search(term: string): this;
+    /**
+     * Set a raw `$apply` expression. Use this for advanced transformations
+     * that the `aggregate()` / `groupBy()` helpers don't cover.
+     *
+     * Requires FileMaker Server 2024+ (v22). Use `db.hasFeature('applyAggregation')`
+     * to check before calling.
+     *
+     * @example
+     * ```ts
+     * const result = await db.from('orders').apply('aggregate(total with sum as totalSum)')
+     *   .get()
+     * ```
+     */
+    apply(expr: string): this;
+    /**
+     * Aggregate the entity set. Produces a `$apply=aggregate(...)` expression.
+     *
+     * Requires FileMaker Server 2024+ (v22).
+     *
+     * @example
+     * ```ts
+     * const result = await db.from('orders')
+     *   .aggregate([{ field: 'total', function: 'sum', alias: 'totalSum' }])
+     *   .get()
+     * // $apply=aggregate(total with sum as totalSum)
+     * ```
+     */
+    aggregate(expressions: Array<{
+        field: string;
+        function: AggregateFunction;
+        alias: string;
+    }>): this;
+    /**
+     * Group the entity set by one or more fields, optionally with aggregation.
+     * Produces a `$apply=groupby((fields), aggregate(...))` expression.
+     *
+     * Requires FileMaker Server 2024+ (v22).
+     *
+     * @example
+     * ```ts
+     * const result = await db.from('orders')
+     *   .groupBy(
+     *     ['customerId'],
+     *     [{ field: 'total', function: 'sum', alias: 'totalSum' }],
+     *   )
+     *   .get()
+     * // $apply=groupby((customerId),aggregate(total with sum as totalSum))
+     * ```
+     */
+    groupBy(fields: string[], aggregateExpressions?: Array<{
+        field: string;
+        function: AggregateFunction;
+        alias: string;
+    }>): this;
     /** Build the absolute request URL for this query. */
     toURL(): string;
     /**

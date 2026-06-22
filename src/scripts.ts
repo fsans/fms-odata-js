@@ -8,9 +8,18 @@
  *   POST /<db>/<EntitySet>/Script.<name>           // entity-set context
  *   POST /<db>/<EntitySet>(<key>)/Script.<name>    // single-record context
  *
+ * Starting with FileMaker Server 2026 (v26), scripts can also be invoked by
+ * their immutable FMSID instead of the name:
+ *
+ *   POST /<db>/Script.FMSID:<id>                   // database-level
+ *   POST /<db>/<EntitySet>/Script.FMSID:<id>       // entity-set context
+ *   POST /<db>/<EntitySet>(<key>)/Script.FMSID:<id> // single-record context
+ *
  * The optional parameter is sent as `{ "scriptParameter": "<string>" }`. The
  * response envelope is `{ "scriptResult": "...", "scriptError": "0" }`; a
  * non-zero `scriptError` becomes an `FMScriptError`.
+ *
+ * @see https://github.com/fsans/FM-ODATA_SPEC/blob/main/docs/06-scripts.md
  */
 
 import type { FMOData } from './client.js'
@@ -22,6 +31,11 @@ import {
   escapeStringLiteral,
   type ODataLiteral,
 } from './url.js'
+
+/** Script identifier: either by name or by FMSID (v26+). */
+export type ScriptIdentifier =
+  | { type: 'name'; name: string }
+  | { type: 'fmsid'; id: number }
 
 /** Options accepted by a script invocation. */
 export interface ScriptOptions extends RequestOptions {
@@ -87,8 +101,18 @@ export class ScriptInvoker {
   /** Build the absolute URL for invoking `name` at this scope. */
   url(name: string): string {
     if (!name) throw new TypeError('ScriptInvoker: script name is required')
+    return this._urlForSegment(`Script.${encodePathSegment(name)}`)
+  }
+
+  /** Build the absolute URL for invoking by FMSID at this scope. */
+  urlById(fmsid: number): string {
+    if (!Number.isFinite(fmsid)) throw new TypeError('ScriptInvoker: fmsid must be a finite number')
+    return this._urlForSegment(`Script.FMSID:${fmsid}`)
+  }
+
+  /** @internal — build URL from a script path segment. */
+  private _urlForSegment(scriptSegment: string): string {
     const base = this._client.baseUrl
-    const scriptSegment = `Script.${encodePathSegment(name)}`
     if (this.entitySet === undefined) {
       return `${base}/${scriptSegment}`
     }
@@ -99,9 +123,27 @@ export class ScriptInvoker {
     return `${base}/${setSegment}(${formatKey(this.key)})/${scriptSegment}`
   }
 
-  /** Invoke the script. Resolves to a `ScriptResult` on success. */
+  /** Invoke the script by name. Resolves to a `ScriptResult` on success. */
   async run(name: string, opts: ScriptOptions = {}): Promise<ScriptResult> {
-    const url = this.url(name)
+    return this._runAtUrl(this.url(name), opts)
+  }
+
+  /**
+   * Invoke the script by its immutable FMSID.
+   *
+   * Requires FileMaker Server 2026+ (v26). Use `db.hasFeature('scriptsByFMSID')`
+   * to check before calling.
+   *
+   * ```ts
+   * const result = await db.scriptById(42, { parameter: 'hello' })
+   * ```
+   */
+  async runById(fmsid: number, opts: ScriptOptions = {}): Promise<ScriptResult> {
+    return this._runAtUrl(this.urlById(fmsid), opts)
+  }
+
+  /** @internal — execute a script POST at the given URL. */
+  private async _runAtUrl(url: string, opts: ScriptOptions): Promise<ScriptResult> {
     const headers: Record<string, string> = {}
     let body: string | undefined
     if (opts.parameter !== undefined) {
@@ -187,6 +229,15 @@ export function runScriptAtDatabase(
   opts?: ScriptOptions,
 ): Promise<ScriptResult> {
   return new ScriptInvoker(client).run(name, opts)
+}
+
+/** @internal — convenience factory for FMSID-based invocation. */
+export function runScriptByIdAtDatabase(
+  client: FMOData,
+  fmsid: number,
+  opts?: ScriptOptions,
+): Promise<ScriptResult> {
+  return new ScriptInvoker(client).runById(fmsid, opts)
 }
 
 /** @internal */
