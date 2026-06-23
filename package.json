@@ -45,6 +45,7 @@
     "typescript"
   ],
   "license": "MIT",
+  "author": "Francesc Sans <tecnic.at.ntwk.es> (nBCN Software, Barcelona — http://www.ntwk.es)",
   "engines": {
     "node": ">=18"
   },

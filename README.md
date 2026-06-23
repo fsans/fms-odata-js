@@ -378,4 +378,4 @@ Issues and PRs are welcome. Please run `npm test` and `npm run typecheck` before
 
 ## License
 
-[MIT](./LICENSE) © fm-odata-js contributors
+[MIT](./LICENSE) © 2026 Francesc Sans, nBCN Software, Barcelona — <http://www.ntwk.es>
