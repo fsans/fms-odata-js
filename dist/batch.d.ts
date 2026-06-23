@@ -36,7 +36,7 @@
  * this library is functional but limited to: changeset (optional) followed by
  * at most one read operation per batch call.
  */
-import type { FMOData } from './client.js';
+import type { FMSOData } from './client.js';
 import type { ODataLiteral } from './url.js';
 import type { RequestOptions } from './types.js';
 /** Handle returned when adding an operation to a batch. Resolves to the operation result. */
@@ -115,7 +115,7 @@ export declare class Batch {
     private _client;
     private _parts;
     private _changesets;
-    constructor(client: FMOData);
+    constructor(client: FMSOData);
     /**
      * Add a read operation (GET) to the batch.
      * Read operations are not part of a changeset and execute independently.

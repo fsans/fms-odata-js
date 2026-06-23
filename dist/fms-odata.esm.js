@@ -1,8 +1,8 @@
 // src/errors.ts
-var FMODataError = class extends Error {
+var FMSODataError = class extends Error {
   constructor(message, init) {
     super(message);
-    this.name = "FMODataError";
+    this.name = "FMSODataError";
     this.status = init.status;
     if (init.code !== void 0) this.code = init.code;
     if (init.odataError !== void 0) this.odataError = init.odataError;
@@ -39,9 +39,9 @@ async function parseErrorResponse(res, request) {
     if (codeMatch?.[1]) code = codeMatch[1];
     if (msgMatch?.[1]) message = msgMatch[1];
   }
-  return new FMODataError(message, { status, ...code !== void 0 ? { code } : {}, odataError, request });
+  return new FMSODataError(message, { status, ...code !== void 0 ? { code } : {}, odataError, request });
 }
-var FMScriptError = class extends FMODataError {
+var FMScriptError = class extends FMSODataError {
   constructor(message, init) {
     super(message, {
       status: init.status,
@@ -54,8 +54,8 @@ var FMScriptError = class extends FMODataError {
     if (init.scriptResult !== void 0) this.scriptResult = init.scriptResult;
   }
 };
-function isFMODataError(err) {
-  return err instanceof FMODataError;
+function isFMSODataError(err) {
+  return err instanceof FMSODataError;
 }
 function isFMScriptError(err) {
   return err instanceof FMScriptError;
@@ -66,7 +66,7 @@ var AUTH_SCHEME_RE = /^(basic|bearer|fmid|negotiate|digest)\s+\S/i;
 async function resolveAuthHeader(provider) {
   const raw = typeof provider === "function" ? await provider() : provider;
   if (typeof raw !== "string" || raw.length === 0) {
-    throw new TypeError("fm-odata-js: token resolver produced an empty value");
+    throw new TypeError("fms-odata-js: token resolver produced an empty value");
   }
   return AUTH_SCHEME_RE.test(raw) ? raw : `Bearer ${raw}`;
 }
@@ -157,7 +157,7 @@ async function executeJson(ctx, url, opts = {}) {
     try {
       return JSON.parse(text);
     } catch {
-      throw new FMODataError(`Expected JSON response, got "${ctype || "no content-type"}"`, {
+      throw new FMSODataError(`Expected JSON response, got "${ctype || "no content-type"}"`, {
         status: res.status,
         odataError: text,
         request: { url, method: opts.method ?? "GET" }
@@ -513,7 +513,7 @@ var Batch = class {
   }
 };
 
-// node_modules/@fm-odata/spec-ts/dist/versions.js
+// node_modules/@fms-odata/spec-ts/dist/versions.js
 var FM_VERSION_NAMES = {
   "19": "FileMaker 19.x",
   "21": "Claris FileMaker 2023",
@@ -779,7 +779,7 @@ function minVersionForFeature(feature) {
   return null;
 }
 
-// node_modules/@fm-odata/spec-ts/dist/metadata.js
+// node_modules/@fms-odata/spec-ts/dist/metadata.js
 function parseVersionString(raw) {
   const m = raw.trim().match(/(\d+)\.(\d+)\.(\d+)/);
   if (!m)
@@ -997,7 +997,7 @@ function parseMetadata(xml) {
     return result;
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err);
-    throw new FMODataError(`Failed to parse $metadata: ${message}`, {
+    throw new FMSODataError(`Failed to parse $metadata: ${message}`, {
       status: 0,
       odataError: xml.slice(0, 500)
     });
@@ -1483,7 +1483,7 @@ var EntityRef = class {
     });
     return json;
   }
-  /** `DELETE` the entity. Resolves on success; throws `FMODataError` otherwise. */
+  /** `DELETE` the entity. Resolves on success; throws `FMSODataError` otherwise. */
   async delete(opts = {}) {
     const headers = {};
     if (opts.ifMatch) headers["If-Match"] = opts.ifMatch;
@@ -1835,7 +1835,7 @@ var Query = class _Query {
    */
   byKey(key) {
     if (!this._client) {
-      throw new Error("Query#byKey: no client attached (use FMOData#from)");
+      throw new Error("Query#byKey: no client attached (use FMSOData#from)");
     }
     return new EntityRef(this._client, this._entitySet, key);
   }
@@ -1845,7 +1845,7 @@ var Query = class _Query {
    */
   async create(body, opts = {}) {
     if (!this._client) {
-      throw new Error("Query#create: no client attached (use FMOData#from)");
+      throw new Error("Query#create: no client attached (use FMSOData#from)");
     }
     const url = `${this._baseUrl}/${encodePathSegment(this._entitySet)}`;
     const json = await executeJson(this._client._ctx, url, {
@@ -1873,7 +1873,7 @@ var Query = class _Query {
    */
   async createWithContainers(regularFields, containers, opts = {}) {
     if (!this._client) {
-      throw new Error("Query#createWithContainers: no client attached (use FMOData#from)");
+      throw new Error("Query#createWithContainers: no client attached (use FMSOData#from)");
     }
     const url = `${this._baseUrl}/${encodePathSegment(this._entitySet)}`;
     const body = buildContainerJsonBody(
@@ -1894,7 +1894,7 @@ var Query = class _Query {
    */
   async get(opts = {}) {
     if (!this._client) {
-      throw new Error("Query#get: no client attached (use FMOData#from)");
+      throw new Error("Query#get: no client attached (use FMSOData#from)");
     }
     const json = await executeJson(this._client._ctx, this.toURL(), {
       method: "GET",
@@ -1915,7 +1915,7 @@ var Query = class _Query {
    */
   async script(name, opts = {}) {
     if (!this._client) {
-      throw new Error("Query#script: no client attached (use FMOData#from)");
+      throw new Error("Query#script: no client attached (use FMSOData#from)");
     }
     return runScriptAtEntitySet(this._client, this._entitySet, name, opts);
   }
@@ -1952,12 +1952,12 @@ function serializeOptions(s, opts) {
 }
 
 // src/client.ts
-var FMOData = class {
+var FMSOData = class {
   constructor(options) {
-    if (!options.host) throw new TypeError("FMOData: `host` is required");
-    if (!options.database) throw new TypeError("FMOData: `database` is required");
+    if (!options.host) throw new TypeError("FMSOData: `host` is required");
+    if (!options.database) throw new TypeError("FMSOData: `database` is required");
     if (options.token === void 0 || options.token === null) {
-      throw new TypeError("FMOData: `token` is required");
+      throw new TypeError("FMSOData: `token` is required");
     }
     this.host = options.host.replace(/\/+$/, "");
     this.database = options.database;
@@ -1974,7 +1974,7 @@ var FMOData = class {
    * Start a query against the given entity set (FileMaker layout name).
    */
   from(entitySet) {
-    if (!entitySet) throw new TypeError("FMOData#from: entitySet is required");
+    if (!entitySet) throw new TypeError("FMSOData#from: entitySet is required");
     return new Query(this.baseUrl, entitySet, this);
   }
   /**
@@ -2051,8 +2051,8 @@ var FMOData = class {
   /**
    * Detect the FileMaker Server major version by fetching `$metadata` and
    * parsing the version annotation using a multi-strategy approach (see
-   * `@fm-odata/spec-ts` `parseServerVersion`). The result is cached for the
-   * lifetime of this `FMOData` instance.
+   * `@fms-odata/spec-ts` `parseServerVersion`). The result is cached for the
+   * lifetime of this `FMSOData` instance.
    *
    * Returns the major version string (`'19'`, `'21'`, `'22'`, `'26'`) or
    * `'future'` if the version is newer than the spec knows about. Returns
@@ -2083,7 +2083,7 @@ var FMOData = class {
   /**
    * Get the full parsed FileMaker Server version (major, minor, patch, raw)
    * by fetching `$metadata` and parsing the version annotation. The result is
-   * cached for the lifetime of this `FMOData` instance.
+   * cached for the lifetime of this `FMSOData` instance.
    *
    * Returns `null` if the version cannot be determined.
    *
@@ -2171,8 +2171,10 @@ export {
   Changeset,
   ContainerRef,
   EntityRef,
-  FMOData,
-  FMODataError,
+  FMSOData as FMOData,
+  FMSODataError as FMODataError,
+  FMSOData,
+  FMSODataError,
   FMScriptError,
   FM_CONTAINER_SUPPORTED_MIME_TYPES,
   FM_VERSION_MATRIX,
@@ -2188,7 +2190,8 @@ export {
   fmidAuth,
   hasFeature,
   hasQueryOption,
-  isFMODataError,
+  isFMSODataError as isFMODataError,
+  isFMSODataError,
   isFMScriptError,
   minVersionForFeature,
   parseServerVersion,

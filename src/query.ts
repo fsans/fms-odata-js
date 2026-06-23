@@ -7,7 +7,7 @@
  * auth, error handling, and the mock server.
  */
 
-import type { FMOData } from './client.js'
+import type { FMSOData } from './client.js'
 import {
   buildContainerJsonBody,
   type ContainerJsonValue,
@@ -22,7 +22,7 @@ import {
   formatLiteral,
   type ODataLiteral,
 } from './url.js'
-import type { AggregateFunction } from '@fm-odata/spec-ts'
+import type { AggregateFunction } from '@fms-odata/spec-ts'
 
 // ---------------------------------------------------------------------------
 // Filter
@@ -140,9 +140,9 @@ export class Query<T = Record<string, unknown>> {
   /** @internal */ readonly _state: QueryOptionsState = {}
   /** @internal */ readonly _baseUrl: string
   /** @internal */ readonly _entitySet: string
-  /** @internal */ readonly _client: FMOData | undefined
+  /** @internal */ readonly _client: FMSOData | undefined
 
-  constructor(baseUrl: string, entitySet: string, client?: FMOData) {
+  constructor(baseUrl: string, entitySet: string, client?: FMSOData) {
     this._baseUrl = baseUrl
     this._entitySet = entitySet
     if (client) this._client = client
@@ -296,7 +296,7 @@ export class Query<T = Record<string, unknown>> {
    */
   byKey(key: string | number): EntityRef<T> {
     if (!this._client) {
-      throw new Error('Query#byKey: no client attached (use FMOData#from)')
+      throw new Error('Query#byKey: no client attached (use FMSOData#from)')
     }
     return new EntityRef<T>(this._client, this._entitySet, key)
   }
@@ -310,7 +310,7 @@ export class Query<T = Record<string, unknown>> {
     opts: RequestOptions = {},
   ): Promise<T> {
     if (!this._client) {
-      throw new Error('Query#create: no client attached (use FMOData#from)')
+      throw new Error('Query#create: no client attached (use FMSOData#from)')
     }
     const url = `${this._baseUrl}/${encodePathSegment(this._entitySet)}`
     const json = await executeJson<T>(this._client._ctx, url, {
@@ -343,7 +343,7 @@ export class Query<T = Record<string, unknown>> {
     opts: RequestOptions = {},
   ): Promise<T> {
     if (!this._client) {
-      throw new Error('Query#createWithContainers: no client attached (use FMOData#from)')
+      throw new Error('Query#createWithContainers: no client attached (use FMSOData#from)')
     }
     const url = `${this._baseUrl}/${encodePathSegment(this._entitySet)}`
     const body = buildContainerJsonBody(
@@ -365,7 +365,7 @@ export class Query<T = Record<string, unknown>> {
    */
   async get(opts: RequestOptions = {}): Promise<QueryResult<T>> {
     if (!this._client) {
-      throw new Error('Query#get: no client attached (use FMOData#from)')
+      throw new Error('Query#get: no client attached (use FMSOData#from)')
     }
     type Envelope = {
       value?: T[]
@@ -392,7 +392,7 @@ export class Query<T = Record<string, unknown>> {
    */
   async script(name: string, opts: ScriptOptions = {}): Promise<ScriptResult> {
     if (!this._client) {
-      throw new Error('Query#script: no client attached (use FMOData#from)')
+      throw new Error('Query#script: no client attached (use FMSOData#from)')
     }
     return runScriptAtEntitySet(this._client, this._entitySet, name, opts)
   }

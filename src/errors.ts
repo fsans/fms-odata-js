@@ -1,13 +1,13 @@
 /**
- * Normalized error thrown by all fm-odata-js operations.
+ * Normalized error thrown by all fms-odata-js operations.
  *
- * The error class shape is aligned with `@fm-odata/spec-ts` (the canonical
- * spec package). fm-odata-js keeps its own class identity for backward
+ * The error class shape is aligned with `@fms-odata/spec-ts` (the canonical
+ * spec package). fms-odata-js keeps its own class identity for backward
  * compatibility with existing `instanceof` checks in user code.
  *
  * @see https://github.com/fsans/fms-odata-spec/blob/main/docs/13-quirks.md
  */
-export class FMODataError extends Error {
+export class FMSODataError extends Error {
   readonly status: number
   readonly code: string | undefined
   readonly odataError: unknown
@@ -23,7 +23,7 @@ export class FMODataError extends Error {
     },
   ) {
     super(message)
-    this.name = 'FMODataError'
+    this.name = 'FMSODataError'
     this.status = init.status
     if (init.code !== undefined) this.code = init.code
     if (init.odataError !== undefined) this.odataError = init.odataError
@@ -32,7 +32,7 @@ export class FMODataError extends Error {
 }
 
 /**
- * Parse an error Response body into a `FMODataError`. Handles both stock OData
+ * Parse an error Response body into a `FMSODataError`. Handles both stock OData
  * JSON envelopes (`{ error: { code, message } }`) and FileMaker's XML envelope
  * (`<m:error><m:code>212</m:code><m:message>...</m:message></m:error>`).
  *
@@ -41,7 +41,7 @@ export class FMODataError extends Error {
 export async function parseErrorResponse(
   res: Response,
   request: { url: string; method: string },
-): Promise<FMODataError> {
+): Promise<FMSODataError> {
   const status = res.status
   let body = ''
   try {
@@ -77,7 +77,7 @@ export async function parseErrorResponse(
     if (msgMatch?.[1]) message = msgMatch[1]
   }
 
-  return new FMODataError(message, { status, ...(code !== undefined ? { code } : {}), odataError, request })
+  return new FMSODataError(message, { status, ...(code !== undefined ? { code } : {}), odataError, request })
 }
 
 /**
@@ -85,10 +85,10 @@ export async function parseErrorResponse(
  * `scriptError`. The HTTP request itself succeeded (the server returned 2xx),
  * but the script reported an error via the FMS result envelope.
  *
- * Subclass of `FMODataError` so existing `instanceof FMODataError` checks and
+ * Subclass of `FMSODataError` so existing `instanceof FMSODataError` checks and
  * error-handling code keep working.
  */
-export class FMScriptError extends FMODataError {
+export class FMScriptError extends FMSODataError {
   /** FileMaker script error code as a string (e.g. `"101"`). */
   readonly scriptError: string
   /** Raw `scriptResult` value returned by the script, if any. */
@@ -117,15 +117,15 @@ export class FMScriptError extends FMODataError {
 }
 
 // ---------------------------------------------------------------------------
-// Spec alignment: re-export type-level helpers from @fm-odata/spec-ts
+// Spec alignment: re-export type-level helpers from @fms-odata/spec-ts
 // ---------------------------------------------------------------------------
 
 /** OData standard error response body shape (from spec). */
-export type { ODataErrorBody } from '@fm-odata/spec-ts'
+export type { ODataErrorBody } from '@fms-odata/spec-ts'
 
 /** Check if an error is a FileMaker OData error. */
-export function isFMODataError(err: unknown): err is FMODataError {
-  return err instanceof FMODataError
+export function isFMSODataError(err: unknown): err is FMSODataError {
+  return err instanceof FMSODataError
 }
 
 /** Check if an error is a FileMaker script error. */

@@ -12,7 +12,7 @@ import { dirname, resolve } from 'node:path'
 import { afterAll, describe, expect, it } from 'vitest'
 import { loadFmConfig } from '../../scripts/env.mjs'
 import { createFetch } from '../../scripts/insecure-fetch.mjs'
-import { FMOData, basicAuth, FMODataError, FMScriptError } from '../../src/index.js'
+import { FMSOData, basicAuth, FMSODataError, FMScriptError } from '../../src/index.js'
 
 const cfg = loadFmConfig()
 const live = cfg.live
@@ -21,7 +21,7 @@ const live = cfg.live
 // fast and offline; developers opt in when working against a real FMS.
 describe.skipIf(!live)('live FMS integration', () => {
   const fetch = createFetch({ insecureTls: cfg.insecureTls })
-  const db = new FMOData({
+  const db = new FMSOData({
     host: cfg.host,
     database: cfg.database,
     token: basicAuth(cfg.user, cfg.password),
@@ -53,7 +53,7 @@ describe.skipIf(!live)('live FMS integration', () => {
     const created = await db
       .from<Record<string, unknown>>(cfg.tables.contact)
       .create({
-        first_name: 'fm-odata-js',
+        first_name: 'fms-odata-js',
         last_name: `live-test-${Date.now()}`,
       })
 
@@ -70,13 +70,13 @@ describe.skipIf(!live)('live FMS integration', () => {
 
     // 3. UPDATE
     await db.from(cfg.tables.contact).byKey(key).patch({
-      first_name: 'fm-odata-js-updated',
+      first_name: 'fms-odata-js-updated',
     })
     const readAfterPatch = await db
       .from<Record<string, unknown>>(cfg.tables.contact)
       .byKey(key)
       .get()
-    expect(readAfterPatch.first_name).toBe('fm-odata-js-updated')
+    expect(readAfterPatch.first_name).toBe('fms-odata-js-updated')
 
     // 4. DELETE
     await db.from(cfg.tables.contact).byKey(key).delete()
@@ -88,8 +88,8 @@ describe.skipIf(!live)('live FMS integration', () => {
       .byKey(key)
       .get()
       .catch((e: unknown) => e)
-    expect(err).toBeInstanceOf(FMODataError)
-    expect((err as FMODataError).status).toBeGreaterThanOrEqual(400)
+    expect(err).toBeInstanceOf(FMSODataError)
+    expect((err as FMSODataError).status).toBeGreaterThanOrEqual(400)
   })
 
   it('runs a database-scope script and echoes its parameter', async () => {
@@ -105,10 +105,10 @@ describe.skipIf(!live)('live FMS integration', () => {
     } catch (err) {
       // Two soft-skip paths: FMS may surface "missing script" either as a
       // 200-with-`scriptError: "104"` (→ FMScriptError) or as an HTTP-level
-      // 4xx with a "Script '<name>' not found" message (→ plain FMODataError).
+      // 4xx with a "Script '<name>' not found" message (→ plain FMSODataError).
       const isMissingScript =
         (err instanceof FMScriptError && err.scriptError === '104') ||
-        (err instanceof FMODataError && /not found/i.test(err.message))
+        (err instanceof FMSODataError && /not found/i.test(err.message))
       if (isMissingScript) {
         // eslint-disable-next-line no-console
         console.warn(`[live] skipping script test — script "${scriptName}" missing in solution`)
@@ -133,7 +133,7 @@ describe.skipIf(!live)('live FMS integration', () => {
     const created = await db
       .from<Record<string, unknown>>(cfg.tables.contact)
       .create({
-        first_name: 'fm-odata-js',
+        first_name: 'fms-odata-js',
         last_name: `container-test-${Date.now()}`,
       })
     const pkField = findPrimaryKey(created)
@@ -156,7 +156,7 @@ describe.skipIf(!live)('live FMS integration', () => {
       // FMS surfaces this as either FM error 102 (Field is missing), error 7
       // ("does not exist in any table"), or a 404 status — match all three.
       const isMissingField =
-        err instanceof FMODataError &&
+        err instanceof FMSODataError &&
         (err.code === '102' ||
           err.status === 404 ||
           /does not exist|not found/i.test(err.message))
@@ -178,13 +178,13 @@ describe.skipIf(!live)('live FMS integration', () => {
     await container.delete()
   })
 
-  it('surfaces FMS error envelopes as FMODataError', async () => {
+  it('surfaces FMS error envelopes as FMSODataError', async () => {
     const err = await db
       .from('definitely_not_a_table_xyz')
       .get()
       .catch((e: unknown) => e)
-    expect(err).toBeInstanceOf(FMODataError)
-    expect((err as FMODataError).status).toBeGreaterThanOrEqual(400)
+    expect(err).toBeInstanceOf(FMSODataError)
+    expect((err as FMSODataError).status).toBeGreaterThanOrEqual(400)
   })
 
   it('fetches and parses $metadata', async () => {
@@ -225,7 +225,7 @@ describe.skipIf(!live)('live FMS integration', () => {
     let createdKey: string | number | undefined
     batch.changeset(cs => {
       cs.create(cfg.tables.contact, {
-        first_name: 'fm-odata-js',
+        first_name: 'fms-odata-js',
         last_name: `batch-test-${Date.now()}`,
       })
     })

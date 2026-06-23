@@ -1,4 +1,4 @@
-export { FMOData } from './client.js'
+export { FMSOData } from './client.js'
 export { Batch, Changeset } from './batch.js'
 export type {
   BatchHandle,
@@ -21,7 +21,7 @@ export type {
 } from './containers.js'
 export { EntityRef } from './entity.js'
 export type { EntityWriteOptions, EntityRefInfo } from './entity.js'
-export { FMODataError, FMScriptError, isFMODataError, isFMScriptError } from './errors.js'
+export { FMSODataError, FMScriptError, isFMSODataError, isFMScriptError } from './errors.js'
 export type { ODataErrorBody } from './errors.js'
 export { basicAuth, fmidAuth } from './http.js'
 export type { FMAuthScheme, FMAuthToken, FMAuthTokenProvider } from './http.js'
@@ -36,14 +36,14 @@ export type {
 } from './metadata.js'
 export { Filter, Query, filterFactory } from './query.js'
 export type { FilterFactory, FilterInput, OrderDir, QueryResult } from './query.js'
-export type { AggregateFunction } from '@fm-odata/spec-ts'
+export type { AggregateFunction } from '@fms-odata/spec-ts'
 export { ScriptInvoker } from './scripts.js'
 export type { ScriptOptions, ScriptResult, ScriptScope, ScriptIdentifier } from './scripts.js'
-export type { FMODataOptions, TokenProvider, RequestOptions } from './types.js'
+export type { FMSODataOptions, TokenProvider, RequestOptions } from './types.js'
 export type { ODataLiteral } from './url.js'
 
 // ---------------------------------------------------------------------------
-// Spec alignment: re-export version and feature-flag helpers from @fm-odata/spec-ts
+// Spec alignment: re-export version and feature-flag helpers from @fms-odata/spec-ts
 // ---------------------------------------------------------------------------
 
 export {
@@ -55,7 +55,7 @@ export {
   minVersionForFeature,
   parseServerVersion,
   parseVersionString,
-} from '@fm-odata/spec-ts'
+} from '@fms-odata/spec-ts'
 export type {
   FMVersionMajor,
   FMVersionStatus,
@@ -63,4 +63,19 @@ export type {
   FMQueryOptionFlags,
   FMVersionInfo,
   FMServerVersion,
-} from '@fm-odata/spec-ts'
+} from '@fms-odata/spec-ts'
+
+// ---------------------------------------------------------------------------
+// Deprecated aliases (kept for backward compatibility with fm-odata-js).
+// These re-export the renamed symbols under their old names and will be
+// removed in a future major version. New code should use the FMSOData* names.
+// ---------------------------------------------------------------------------
+
+/** @deprecated Use `FMSOData` instead. */
+export { FMSOData as FMOData } from './client.js'
+/** @deprecated Use `FMSODataError` instead. */
+export { FMSODataError as FMODataError } from './errors.js'
+/** @deprecated Use `isFMSODataError` instead. */
+export { isFMSODataError as isFMODataError } from './errors.js'
+/** @deprecated Use `FMSODataOptions` instead. */
+export type { FMSODataOptions as FMODataOptions } from './types.js'

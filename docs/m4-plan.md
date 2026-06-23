@@ -1,4 +1,4 @@
-# M4 Plan — fm-odata-js
+# M4 Plan — fms-odata-js
 
 Status of milestone **M4** (post v0.1.2). Order chosen for risk-adjusted value:
 
@@ -36,7 +36,7 @@ row (FMS sets the script's "current record" accordingly).
 
 ### Public API
 
-`@/Volumes/DATA00/HOME/Documents/WORK/GITHUB/fm-odata-js/src/scripts.ts` (currently a stub) becomes:
+`@/Volumes/DATA00/HOME/Documents/WORK/GITHUB/fms-odata-js/src/scripts.ts` (currently a stub) becomes:
 
 ```ts
 export interface ScriptOptions extends RequestOptions {
@@ -57,18 +57,18 @@ export class ScriptInvoker {
 
 Surface added to existing classes:
 
-- `FMOData#script(name, opts?)` — database-level.
+- `FMSOData#script(name, opts?)` — database-level.
 - `Query#script(name, opts?)` — entity-set-level (uses the query's entitySet,
   ignores filters/select; documented).
 - `EntityRef#script(name, opts?)` — row-level.
 
 ### Implementation steps
 
-1. Replace `@/Volumes/DATA00/HOME/Documents/WORK/GITHUB/fm-odata-js/src/scripts.ts:1` stub with `ScriptInvoker` + `runScript()` helper using `executeJson` from `@/Volumes/DATA00/HOME/Documents/WORK/GITHUB/fm-odata-js/src/http.ts`.
-2. URL building: reuse `encodePathSegment` from `@/Volumes/DATA00/HOME/Documents/WORK/GITHUB/fm-odata-js/src/url.ts`. Validate script name is non-empty; do not URL-encode the dot in `Script.<name>` but do encode the name segment after the dot.
-3. Wire `script()` methods on `FMOData`, `Query`, `EntityRef`.
-4. Map non-zero `scriptError` to a typed `FMODataError` subclass (`FMScriptError`) carrying `{ scriptError, scriptResult }`. Keep HTTP-layer errors as-is.
-5. Re-export `ScriptResult`, `ScriptOptions`, `FMScriptError` from `@/Volumes/DATA00/HOME/Documents/WORK/GITHUB/fm-odata-js/src/index.ts`.
+1. Replace `@/Volumes/DATA00/HOME/Documents/WORK/GITHUB/fms-odata-js/src/scripts.ts:1` stub with `ScriptInvoker` + `runScript()` helper using `executeJson` from `@/Volumes/DATA00/HOME/Documents/WORK/GITHUB/fms-odata-js/src/http.ts`.
+2. URL building: reuse `encodePathSegment` from `@/Volumes/DATA00/HOME/Documents/WORK/GITHUB/fms-odata-js/src/url.ts`. Validate script name is non-empty; do not URL-encode the dot in `Script.<name>` but do encode the name segment after the dot.
+3. Wire `script()` methods on `FMSOData`, `Query`, `EntityRef`.
+4. Map non-zero `scriptError` to a typed `FMSODataError` subclass (`FMScriptError`) carrying `{ scriptError, scriptResult }`. Keep HTTP-layer errors as-is.
+5. Re-export `ScriptResult`, `ScriptOptions`, `FMScriptError` from `@/Volumes/DATA00/HOME/Documents/WORK/GITHUB/fms-odata-js/src/index.ts`.
 
 ### Tests
 
@@ -86,7 +86,7 @@ Surface added to existing classes:
 ### Docs
 
 - README "Scripts" section with one example.
-- `@/Volumes/DATA00/HOME/Documents/WORK/GITHUB/fm-odata-js/docs/filemaker-quirks.md` entry: scripts run server-side, `scriptResult` is **always a string** even if the script returns a number/boolean.
+- `@/Volumes/DATA00/HOME/Documents/WORK/GITHUB/fms-odata-js/docs/filemaker-quirks.md` entry: scripts run server-side, `scriptResult` is **always a string** even if the script returns a number/boolean.
 
 ### Acceptance
 
@@ -118,7 +118,7 @@ Notes:
 
 ### Public API
 
-`@/Volumes/DATA00/HOME/Documents/WORK/GITHUB/fm-odata-js/src/containers.ts` (stub) becomes:
+`@/Volumes/DATA00/HOME/Documents/WORK/GITHUB/fms-odata-js/src/containers.ts` (stub) becomes:
 
 ```ts
 export interface ContainerDownload {
@@ -148,13 +148,13 @@ Surface added: `EntityRef#container(fieldName) → ContainerRef`.
 
 ### Implementation steps
 
-1. Replace `@/Volumes/DATA00/HOME/Documents/WORK/GITHUB/fm-odata-js/src/containers.ts:1` stub.
+1. Replace `@/Volumes/DATA00/HOME/Documents/WORK/GITHUB/fms-odata-js/src/containers.ts:1` stub.
 2. URL: `entity.toURL() + '/' + encodePathSegment(field) + '/$value'`.
 3. `get()` uses `executeRequest` (not `executeJson`) with `accept: 'binary'`; assemble `ContainerDownload` from `await res.blob()` + headers; parse `Content-Disposition` filename (RFC 5987 + simple `filename="x"`).
 4. `getStream()` returns `res.body` directly; throws if `null`.
 5. `upload()` sends `PUT` with `Content-Type` from input, optional `Content-Disposition`. Body passes through `Blob | ArrayBuffer | Uint8Array` unchanged (fetch handles all three).
 6. `delete()` sends `DELETE`; expects `204`.
-7. Extend `accept` types in `@/Volumes/DATA00/HOME/Documents/WORK/GITHUB/fm-odata-js/src/http.ts:69` if needed (already has `'binary'`).
+7. Extend `accept` types in `@/Volumes/DATA00/HOME/Documents/WORK/GITHUB/fms-odata-js/src/http.ts:69` if needed (already has `'binary'`).
 8. Re-export `ContainerRef`, `ContainerDownload`, `ContainerUploadInput` from index.
 
 ### Tests
@@ -206,7 +206,7 @@ Returns CSDL XML: `<edmx:Edmx>` → `<edmx:DataServices>` →
 
 ### Public API
 
-`@/Volumes/DATA00/HOME/Documents/WORK/GITHUB/fm-odata-js/src/metadata.ts` (stub) becomes:
+`@/Volumes/DATA00/HOME/Documents/WORK/GITHUB/fms-odata-js/src/metadata.ts` (stub) becomes:
 
 ```ts
 export interface EdmProperty {
@@ -242,7 +242,7 @@ export interface ODataMetadata {
   raw: string                    // original XML, for debugging
 }
 
-// On FMOData:
+// On FMSOData:
 db.metadata(opts?): Promise<ODataMetadata>
 db.metadataXml(opts?): Promise<string>     // escape hatch
 ```
@@ -251,12 +251,12 @@ db.metadataXml(opts?): Promise<string>     // escape hatch
 
 - **No external deps.** Use a tiny hand-rolled XML walker, or `DOMParser` in browsers + a minimal Node fallback.
 - Plan: ship a small dependency-free parser that only understands the subset of CSDL FMS emits (no inheritance, no complex types, no enums in v22). Approx 150–200 LoC.
-- Cache the parsed result on the `FMOData` instance with explicit `db.metadata({ refresh: true })` to refetch.
+- Cache the parsed result on the `FMSOData` instance with explicit `db.metadata({ refresh: true })` to refetch.
 
 ### Implementation steps
 
-1. Replace `@/Volumes/DATA00/HOME/Documents/WORK/GITHUB/fm-odata-js/src/metadata.ts:1` stub with parser + `fetchMetadata(ctx, baseUrl, opts)`.
-2. Add `metadataXml()` (raw text, useful for debugging quirks) and `metadata()` (parsed) on `FMOData`.
+1. Replace `@/Volumes/DATA00/HOME/Documents/WORK/GITHUB/fms-odata-js/src/metadata.ts:1` stub with parser + `fetchMetadata(ctx, baseUrl, opts)`.
+2. Add `metadataXml()` (raw text, useful for debugging quirks) and `metadata()` (parsed) on `FMSOData`.
 3. Internal cache: `private _metadataCache?: Promise<ODataMetadata>` — never hold stale results across `refresh: true`.
 4. Re-export public types from index.
 
@@ -267,7 +267,7 @@ db.metadataXml(opts?): Promise<string>     // escape hatch
   - Assert entity sets, keys, property types, nullability for `contact` and `address`.
   - Actions list contains expected scripts (after Part 1 is in place).
   - `metadata()` caches; `metadata({ refresh: true })` refetches.
-  - Malformed XML → `FMODataError` with helpful message.
+  - Malformed XML → `FMSODataError` with helpful message.
 - **Integration**:
   - Live `db.metadata()` against Contacts FMS; smoke-assert at least 1 entity set + 1 key.
 
@@ -310,7 +310,7 @@ Response mirrors the structure with per-part HTTP responses.
 
 ```ts
 export class Batch {
-  constructor(client: FMOData)
+  constructor(client: FMSOData)
   // Read-only operations (top-level parts):
   add(op: BatchReadOp): BatchHandle<unknown>
   // Atomic group of writes:
@@ -348,7 +348,7 @@ const rows    = await list
 
 ### Implementation steps
 
-1. New module `@/Volumes/DATA00/HOME/Documents/WORK/GITHUB/fm-odata-js/src/batch.ts` (replace stub).
+1. New module `@/Volumes/DATA00/HOME/Documents/WORK/GITHUB/fms-odata-js/src/batch.ts` (replace stub).
 2. Multipart **encoder**:
    - Generate boundaries with `crypto.randomUUID()` (Node 18+ + browsers).
    - Emit `Content-Type: application/http`, `Content-Transfer-Encoding: binary`, request line, headers, blank line, body.
@@ -356,8 +356,8 @@ const rows    = await list
 3. Multipart **decoder**:
    - Split by boundary; for each part, parse headers, locate inner HTTP response, parse status line + headers + body.
    - JSON-parse bodies whose `Content-Type` includes `json`; preserve raw text otherwise.
-4. Map sub-responses back to handle promises in declaration order. Per OData spec, on changeset failure all writes in that changeset roll back; mark all of its handles as rejected with the same `FMODataError`.
-5. Wire `FMOData#batch()`.
+4. Map sub-responses back to handle promises in declaration order. Per OData spec, on changeset failure all writes in that changeset roll back; mark all of its handles as rejected with the same `FMSODataError`.
+5. Wire `FMSOData#batch()`.
 6. Document and surface limits (FMS may cap batch size — discover during integration, record in `filemaker-quirks.md`).
 
 ### Tests

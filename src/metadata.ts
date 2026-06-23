@@ -9,10 +9,10 @@
  * extraction to stay within the bundle budget (~1 KB gzipped).
  */
 
-import { FMODataError } from './errors.js'
+import { FMSODataError } from './errors.js'
 import { executeRequest, type HttpClientContext } from './http.js'
 import type { RequestOptions } from './types.js'
-import { parseServerVersion, type FMServerVersion } from '@fm-odata/spec-ts'
+import { parseServerVersion, type FMServerVersion } from '@fms-odata/spec-ts'
 
 /** Property on an entity type (field in FileMaker). */
 export interface EdmProperty {
@@ -208,7 +208,7 @@ function parseEntitySet(xml: string): EdmEntitySet {
 
 /**
  * @internal — extract the FileMaker Server version from the metadata XML using
- * the multi-strategy parser from @fm-odata/spec-ts.
+ * the multi-strategy parser from @fms-odata/spec-ts.
  *
  * Detection strategies (in priority order):
  * 1a. Org.OData.Core.V1.ProductVersion annotation with String attribute
@@ -244,7 +244,7 @@ function parseAction(xml: string): EdmAction {
 
 /**
  * @internal — parse raw CSDL XML into ODataMetadata.
- * Throws FMODataError for malformed XML.
+ * Throws FMSODataError for malformed XML.
  */
 export function parseMetadata(xml: string): ODataMetadata {
   try {
@@ -284,7 +284,7 @@ export function parseMetadata(xml: string): ODataMetadata {
       actions.push(parseAction(a))
     }
 
-    // Extract server version using the multi-strategy parser from @fm-odata/spec-ts.
+    // Extract server version using the multi-strategy parser from @fms-odata/spec-ts.
     // Handles ProductVersion, ServerVersion (FM 26+), reversed attribute order,
     // and a generic fallback for non-standard annotation terms.
     const serverVersion = extractServerVersion(xml)
@@ -304,7 +304,7 @@ export function parseMetadata(xml: string): ODataMetadata {
     return result
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err)
-    throw new FMODataError(`Failed to parse $metadata: ${message}`, {
+    throw new FMSODataError(`Failed to parse $metadata: ${message}`, {
       status: 0,
       odataError: xml.slice(0, 500),
     })
@@ -329,7 +329,7 @@ export async function fetchMetadataXml(
 
 /**
  * Metadata fetcher bound to a client. Caches by default; pass `refresh: true` to bypass.
- * @internal — exported for testing; use via `FMOData#metadata()`.
+ * @internal — exported for testing; use via `FMSOData#metadata()`.
  */
 export class MetadataFetcher {
   private _cache: Promise<ODataMetadata> | undefined

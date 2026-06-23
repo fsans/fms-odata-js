@@ -37,7 +37,7 @@
  * at most one read operation per batch call.
  */
 
-import type { FMOData } from './client.js'
+import type { FMSOData } from './client.js'
 import { executeRequest, type HttpRequestOptions } from './http.js'
 import type { ODataLiteral } from './url.js'
 import { encodePathSegment, odataEncode } from './url.js'
@@ -235,11 +235,11 @@ interface BatchPart {
 
 /** Batch builder for composing multipart/mixed requests. */
 export class Batch {
-  private _client: FMOData
+  private _client: FMSOData
   private _parts: BatchPart[] = []
   private _changesets: Changeset[] = []
 
-  constructor(client: FMOData) {
+  constructor(client: FMSOData) {
     this._client = client
   }
 

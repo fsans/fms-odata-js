@@ -7,6 +7,32 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.3.0] - 2026-06-23
+
+### Changed — Repository and package rename (`fm-odata-js` → `fms-odata-js`)
+
+The GitHub repository and npm package have been renamed from `fm-odata-js` to `fms-odata-js` to align with the `fms-odata-spec` reference specification and the `@fms-odata/spec-ts` shared types package.
+
+- **Package name:** `fm-odata-js` → `fms-odata-js` on npm. The old package is deprecated and points users to the new name.
+- **Dist bundle filenames:** `fm-odata.esm.js` → `fms-odata.esm.js`, `fm-odata.esm.min.js` → `fms-odata.esm.min.js`, `fm-odata.iife.min.js` → `fms-odata.iife.min.js`.
+- **IIFE global:** `FMODataLib` → `FMSODataLib` (window global for Web Viewer / browser bundles).
+- **Spec dependency:** `@fm-odata/spec-ts` → `@fms-odata/spec-ts` (the spec package was renamed on npm).
+- **Public API class/type identifiers renamed:**
+  - `FMOData` → `FMSOData` (entrypoint class)
+  - `FMODataError` → `FMSODataError` (error class)
+  - `FMODataOptions` → `FMSODataOptions` (constructor options type)
+  - `isFMODataError` → `isFMSODataError` (type guard)
+- **Deprecated aliases.** The old names (`FMOData`, `FMODataError`, `FMODataOptions`, `isFMODataError`) are re-exported as deprecated aliases for backward compatibility. Existing code using named imports keeps working. These aliases will be removed in a future major version.
+
+### Migration
+
+- **npm:** `npm install fms-odata-js` (or update `package.json` dependencies). The old `fm-odata-js` package is deprecated.
+- **Imports:** `import { FMSOData } from 'fms-odata-js'` (new) or `import { FMOData } from 'fms-odata-js'` (deprecated alias, still works).
+- **CDN URLs:** Update `https://cdn.jsdelivr.net/gh/fsans/fm-odata-js@…` to `https://cdn.jsdelivr.net/gh/fsans/fms-odata-js@…` and dist filenames from `fm-odata.esm.min.js` to `fms-odata.esm.min.js`.
+- **IIFE global:** Update `window.FMODataLib` references to `window.FMSODataLib`.
+
+## [0.2.0] - 2026-06-22
+
 ### Added — Spec alignment with @fm-odata/spec-ts
 
 This release aligns fm-odata-js with the [fms-odata-spec](https://github.com/fsans/fms-odata-spec) reference specification. The library now depends on `@fm-odata/spec-ts` (as a devDependency — bundled at build time, zero runtime deps) for shared type definitions and the version feature matrix.

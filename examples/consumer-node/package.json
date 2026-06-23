@@ -1,13 +1,13 @@
 {
-  "name": "fm-odata-consumer-example",
+  "name": "fms-odata-consumer-example",
   "version": "0.0.0",
   "private": true,
   "type": "module",
-  "description": "Minimal consumer of fm-odata-js via a local `file:` dependency.",
+  "description": "Minimal consumer of fms-odata-js via a local `file:` dependency.",
   "scripts": {
     "start": "node index.mjs"
   },
   "dependencies": {
-    "fm-odata-js": "file:../.."
+    "fms-odata-js": "file:../.."
   }
 }

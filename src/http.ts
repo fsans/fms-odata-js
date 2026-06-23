@@ -2,7 +2,7 @@
  * HTTP plumbing shared by the query builder, entity handles, and (later)
  * containers, scripts, metadata, and batch.
  *
- * Aligned with `@fm-odata/spec-ts` for auth type definitions. fm-odata-js
+ * Aligned with `@fms-odata/spec-ts` for auth type definitions. fms-odata-js
  * keeps its own `resolveAuthHeader`, `basicAuth`, `combineSignals`, and
  * `executeRequest` implementations which are more feature-rich (401 retry,
  * timeout composition, browser/Web Viewer compatibility).
@@ -11,12 +11,12 @@
  * - Authorization header resolution (Basic, Bearer, or FMID, auto-detected).
  * - Timeout + AbortSignal composition.
  * - 401 retry via `onUnauthorized` (once).
- * - Error envelope normalization into `FMODataError`.
+ * - Error envelope normalization into `FMSODataError`.
  *
  * @see https://github.com/fsans/fms-odata-spec/blob/main/docs/04-authentication.md
  */
 
-import { parseErrorResponse, FMODataError } from './errors.js'
+import { parseErrorResponse, FMSODataError } from './errors.js'
 import type { TokenProvider, RequestOptions } from './types.js'
 
 /** A scheme-prefixed Authorization value (e.g. `Basic …`, `Bearer …`, or `FMID …`). */
@@ -29,7 +29,7 @@ export async function resolveAuthHeader(provider: TokenProvider): Promise<string
       ? await provider()
       : provider
   if (typeof raw !== 'string' || raw.length === 0) {
-    throw new TypeError('fm-odata-js: token resolver produced an empty value')
+    throw new TypeError('fms-odata-js: token resolver produced an empty value')
   }
   return AUTH_SCHEME_RE.test(raw) ? raw : `Bearer ${raw}`
 }
@@ -51,7 +51,7 @@ export function fmidAuth(token: string): string {
 }
 
 /** Auth scheme type (aligned with spec). */
-export type { FMAuthScheme, FMAuthToken, FMAuthTokenProvider } from '@fm-odata/spec-ts'
+export type { FMAuthScheme, FMAuthToken, FMAuthTokenProvider } from '@fms-odata/spec-ts'
 
 /** Combine multiple `AbortSignal`s into one that aborts when any input aborts. */
 export function combineSignals(
@@ -84,7 +84,7 @@ export interface HttpRequestOptions extends RequestOptions {
   accept?: 'json' | 'xml' | 'text' | 'binary' | 'none'
 }
 
-/** Context supplied by `FMOData` to execute a request. */
+/** Context supplied by `FMSOData` to execute a request. */
 export interface HttpClientContext {
   token: TokenProvider
   onUnauthorized?: () => void | Promise<void>
@@ -179,7 +179,7 @@ export async function executeJson<T = unknown>(
     try {
       return JSON.parse(text) as T
     } catch {
-      throw new FMODataError(`Expected JSON response, got "${ctype || 'no content-type'}"`, {
+      throw new FMSODataError(`Expected JSON response, got "${ctype || 'no content-type'}"`, {
         status: res.status,
         odataError: text,
         request: { url, method: opts.method ?? 'GET' },

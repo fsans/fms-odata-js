@@ -1,20 +1,20 @@
 import { describe, expect, it, vi } from 'vitest'
-import { FMOData } from '../../src/client.js'
+import { FMSOData } from '../../src/client.js'
 import {
   formatContentDisposition,
   parseContentDispositionFilename,
   sniffContainerMime,
 } from '../../src/containers.js'
-import { FMODataError } from '../../src/errors.js'
-import type { FMODataOptions } from '../../src/types.js'
+import { FMSODataError } from '../../src/errors.js'
+import type { FMSODataOptions } from '../../src/types.js'
 
 const BASE = 'https://fms.example.com/fmi/odata/v4/Invoices'
 
 function makeClient(
   fetchMock: ReturnType<typeof vi.fn>,
-  overrides: Partial<FMODataOptions> = {},
-): FMOData {
-  return new FMOData({
+  overrides: Partial<FMSODataOptions> = {},
+): FMSOData {
+  return new FMSOData({
     host: 'https://fms.example.com',
     database: 'Invoices',
     token: 'abc',
@@ -387,7 +387,7 @@ describe('ContainerRef.delete', () => {
 })
 
 describe('ContainerRef error propagation', () => {
-  it('surfaces 4xx responses as FMODataError', async () => {
+  it('surfaces 4xx responses as FMSODataError', async () => {
     const fetchMock = vi.fn().mockResolvedValue(
       new Response(JSON.stringify({ error: { code: '404', message: 'No record' } }), {
         status: 404,
@@ -401,7 +401,7 @@ describe('ContainerRef error propagation', () => {
       .container('photo')
       .get()
       .catch((e: unknown) => e)
-    expect(err).toBeInstanceOf(FMODataError)
-    expect((err as FMODataError).status).toBe(404)
+    expect(err).toBeInstanceOf(FMSODataError)
+    expect((err as FMSODataError).status).toBe(404)
   })
 })

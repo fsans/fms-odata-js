@@ -19,9 +19,9 @@
  * response envelope is `{ "scriptResult": "...", "scriptError": "0" }`; a
  * non-zero `scriptError` becomes an `FMScriptError`.
  *
- * @see https://github.com/fsans/FM-ODATA_SPEC/blob/main/docs/06-scripts.md
+ * @see https://github.com/fsans/fms-odata-spec/blob/main/docs/06-scripts.md
  */
-import type { FMOData } from './client.js';
+import type { FMSOData } from './client.js';
 import type { RequestOptions } from './types.js';
 import { type ODataLiteral } from './url.js';
 /** Script identifier: either by name or by FMSID (v26+). */
@@ -62,15 +62,15 @@ export interface ScriptScope {
     key?: ODataLiteral;
 }
 /**
- * Low-level handle used internally by `FMOData#script`, `Query#script`, and
+ * Low-level handle used internally by `FMSOData#script`, `Query#script`, and
  * `EntityRef#script`. Exposed so advanced callers can build their own
  * invocation paths if needed.
  */
 export declare class ScriptInvoker {
-    /** @internal */ readonly _client: FMOData;
+    /** @internal */ readonly _client: FMSOData;
     readonly entitySet: string | undefined;
     readonly key: ODataLiteral | undefined;
-    constructor(client: FMOData, scope?: ScriptScope);
+    constructor(client: FMSOData, scope?: ScriptScope);
     /** Build the absolute URL for invoking `name` at this scope. */
     url(name: string): string;
     /** Build the absolute URL for invoking by FMSID at this scope. */
@@ -104,11 +104,11 @@ export declare function parseScriptEnvelope(raw: unknown, request: {
     method: string;
 }): ScriptResult;
 /** @internal — convenience factory used by client/query/entity helpers. */
-export declare function runScriptAtDatabase(client: FMOData, name: string, opts?: ScriptOptions): Promise<ScriptResult>;
+export declare function runScriptAtDatabase(client: FMSOData, name: string, opts?: ScriptOptions): Promise<ScriptResult>;
 /** @internal — convenience factory for FMSID-based invocation. */
-export declare function runScriptByIdAtDatabase(client: FMOData, fmsid: number, opts?: ScriptOptions): Promise<ScriptResult>;
+export declare function runScriptByIdAtDatabase(client: FMSOData, fmsid: number, opts?: ScriptOptions): Promise<ScriptResult>;
 /** @internal */
-export declare function runScriptAtEntitySet(client: FMOData, entitySet: string, name: string, opts?: ScriptOptions): Promise<ScriptResult>;
+export declare function runScriptAtEntitySet(client: FMSOData, entitySet: string, name: string, opts?: ScriptOptions): Promise<ScriptResult>;
 /** @internal */
-export declare function runScriptAtEntity(client: FMOData, entitySet: string, key: ODataLiteral, name: string, opts?: ScriptOptions): Promise<ScriptResult>;
+export declare function runScriptAtEntity(client: FMSOData, entitySet: string, key: ODataLiteral, name: string, opts?: ScriptOptions): Promise<ScriptResult>;
 //# sourceMappingURL=scripts.d.ts.map

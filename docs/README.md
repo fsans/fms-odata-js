@@ -1,4 +1,4 @@
-# fm-odata-js docs
+# fms-odata-js docs
 
 - `filemaker-quirks.md` — FMS OData deviations and how this library works around them
 - `filemaker-odata-container-guide.md` — full Claris OData container-operations reference

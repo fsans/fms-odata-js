@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from 'vitest'
-import { FMOData } from '../../src/client.js'
+import { FMSOData } from '../../src/client.js'
 import { EntityRef } from '../../src/entity.js'
-import type { FMODataOptions } from '../../src/types.js'
+import type { FMSODataOptions } from '../../src/types.js'
 
 const BASE = 'https://fms.example.com/fmi/odata/v4/Invoices'
 
@@ -13,8 +13,8 @@ function jsonResponse(body: unknown, init: ResponseInit = {}): Response {
   })
 }
 
-function makeClient(fetch: ReturnType<typeof vi.fn>, overrides: Partial<FMODataOptions> = {}): FMOData {
-  return new FMOData({
+function makeClient(fetch: ReturnType<typeof vi.fn>, overrides: Partial<FMSODataOptions> = {}): FMSOData {
+  return new FMSOData({
     host: 'https://fms.example.com',
     database: 'Invoices',
     token: 'abc',

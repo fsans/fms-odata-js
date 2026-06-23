@@ -1,8 +1,8 @@
 import { describe, expect, it, vi } from 'vitest'
-import { FMOData } from '../../src/client.js'
-import { FMODataError } from '../../src/errors.js'
+import { FMSOData } from '../../src/client.js'
+import { FMSODataError } from '../../src/errors.js'
 import { basicAuth, combineSignals, resolveAuthHeader } from '../../src/http.js'
-import type { FMODataOptions } from '../../src/types.js'
+import type { FMSODataOptions } from '../../src/types.js'
 
 function jsonResponse(body: unknown, init: ResponseInit = {}): Response {
   return new Response(JSON.stringify(body), {
@@ -73,12 +73,12 @@ describe('combineSignals', () => {
   })
 })
 
-describe('FMOData request plumbing (mocked fetch)', () => {
+describe('FMSOData request plumbing (mocked fetch)', () => {
   function makeClient(
     fetchMock: ReturnType<typeof vi.fn>,
-    overrides: Partial<FMODataOptions> = {},
-  ): FMOData {
-    return new FMOData({
+    overrides: Partial<FMSODataOptions> = {},
+  ): FMSOData {
+    return new FMSOData({
       host: 'https://fms.example.com',
       database: 'Invoices',
       token: 'abc',
@@ -124,18 +124,18 @@ describe('FMOData request plumbing (mocked fetch)', () => {
       .fn()
       .mockResolvedValue(new Response('', { status: 401, statusText: 'Unauthorized' }))
     const db = makeClient(fetchMock)
-    await expect(db.from('contact').get()).rejects.toBeInstanceOf(FMODataError)
+    await expect(db.from('contact').get()).rejects.toBeInstanceOf(FMSODataError)
     expect(fetchMock).toHaveBeenCalledOnce()
   })
 
   it('does not retry twice if the refreshed request also returns 401', async () => {
     const fetchMock = vi.fn().mockResolvedValue(new Response('', { status: 401 }))
     const db = makeClient(fetchMock, { onUnauthorized: async () => {} })
-    await expect(db.from('contact').get()).rejects.toBeInstanceOf(FMODataError)
+    await expect(db.from('contact').get()).rejects.toBeInstanceOf(FMSODataError)
     expect(fetchMock).toHaveBeenCalledTimes(2)
   })
 
-  it('throws a typed FMODataError on HTTP errors', async () => {
+  it('throws a typed FMSODataError on HTTP errors', async () => {
     const fetchMock = vi.fn().mockResolvedValue(
       new Response(JSON.stringify({ error: { code: '400', message: 'Bad stuff' } }), {
         status: 400,
@@ -148,11 +148,11 @@ describe('FMOData request plumbing (mocked fetch)', () => {
       .from('contact')
       .get()
       .catch((e: unknown) => e)
-    expect(err).toBeInstanceOf(FMODataError)
-    expect((err as FMODataError).status).toBe(400)
-    expect((err as FMODataError).code).toBe('400')
-    expect((err as FMODataError).message).toBe('Bad stuff')
-    expect((err as FMODataError).request).toEqual({
+    expect(err).toBeInstanceOf(FMSODataError)
+    expect((err as FMSODataError).status).toBe(400)
+    expect((err as FMSODataError).code).toBe('400')
+    expect((err as FMSODataError).message).toBe('Bad stuff')
+    expect((err as FMSODataError).request).toEqual({
       url: 'https://fms.example.com/fmi/odata/v4/Invoices/contact',
       method: 'GET',
     })

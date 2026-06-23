@@ -1,8 +1,8 @@
 /**
  * OData URL encoding helpers.
  *
- * Aligned with `@fm-odata/spec-ts` for the shared helpers (`escapeStringLiteral`,
- * `formatLiteral`). fm-odata-js keeps its richer implementations for
+ * Aligned with `@fms-odata/spec-ts` for the shared helpers (`escapeStringLiteral`,
+ * `formatLiteral`). fms-odata-js keeps its richer implementations for
  * `formatDateTime`, `parseDateTime`, `odataEncode`, `buildQueryString`, and
  * `encodePathSegment` which go beyond the spec's minimal versions.
  *

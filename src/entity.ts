@@ -5,7 +5,7 @@
  * I/O, v0.1.5+).
  */
 
-import type { FMOData } from './client.js'
+import type { FMSOData } from './client.js'
 import {
   buildContainerJsonBody,
   ContainerRef,
@@ -60,9 +60,9 @@ export class EntityRef<T = Record<string, unknown>> {
   readonly entitySet: string
   readonly key: ODataLiteral
 
-  /** @internal */ readonly _client: FMOData
+  /** @internal */ readonly _client: FMSOData
 
-  constructor(client: FMOData, entitySet: string, key: ODataLiteral) {
+  constructor(client: FMSOData, entitySet: string, key: ODataLiteral) {
     this._client = client
     this.entitySet = entitySet
     this.key = key
@@ -126,7 +126,7 @@ export class EntityRef<T = Record<string, unknown>> {
     return json
   }
 
-  /** `DELETE` the entity. Resolves on success; throws `FMODataError` otherwise. */
+  /** `DELETE` the entity. Resolves on success; throws `FMSODataError` otherwise. */
   async delete(opts: EntityWriteOptions = {}): Promise<void> {
     const headers: Record<string, string> = {}
     if (opts.ifMatch) headers['If-Match'] = opts.ifMatch

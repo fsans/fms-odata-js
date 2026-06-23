@@ -3,7 +3,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>fm-odata-js · Contacts Web Viewer demo</title>
+    <title>fms-odata-js · Contacts Web Viewer demo</title>
     <style>
       :root {
         --bg: #0f172a;
@@ -119,7 +119,7 @@
   </head>
   <body>
     <header>
-      <h1>📇 Contacts · fm-odata-js</h1>
+      <h1>📇 Contacts · fms-odata-js</h1>
       <span class="sub">Web Viewer demo</span>
       <span class="spacer"></span>
       <span id="status" class="status">idle</span>
@@ -146,13 +146,13 @@
 
     <footer>
       Powered by
-      <a href="https://github.com/fsans/fm-odata-js" style="color: var(--accent);">fm-odata-js</a>
-      v0.2.0 — loaded from jsDelivr. Credentials shown here are for the bundled demo
+      <a href="https://github.com/fsans/fms-odata-js" style="color: var(--accent);">fms-odata-js</a>
+      v0.3.0 — loaded from jsDelivr. Credentials shown here are for the bundled demo
       database only; <b>change them before hosting on a real network</b>.
     </footer>
 
     <script type="module">
-      import { FMOData, basicAuth, FMODataError } from 'https://cdn.jsdelivr.net/gh/fsans/fm-odata-js@v0.2.0/dist/fm-odata.esm.min.js'
+      import { FMSOData, basicAuth, FMSODataError } from 'https://cdn.jsdelivr.net/gh/fsans/fms-odata-js@v0.3.0/dist/fms-odata.esm.min.js'
 
       const TABLES = ['contact', 'email', 'address', 'phone']
       const state = { active: TABLES[0], data: {}, counts: {} }
@@ -190,7 +190,7 @@
         if (rows === undefined) { view.innerHTML = '<div class="empty">No data yet.</div>'; return }
         if (rows instanceof Error) {
           const err = rows
-          const code = err instanceof FMODataError ? ` (HTTP ${err.status}${err.code ? ' · ' + err.code : ''})` : ''
+          const code = err instanceof FMSODataError ? ` (HTTP ${err.status}${err.code ? ' · ' + err.code : ''})` : ''
           view.innerHTML = `<div class="error">${escapeHtml(err.message)}${code}</div>`
           return
         }
@@ -220,7 +220,7 @@
         const password = $('password').value
         if (!host || !database) { setStatus('missing host/db', 'err'); return }
 
-        const db = new FMOData({
+        const db = new FMSOData({
           host, database,
           token: basicAuth(user, password),
           timeoutMs: 15_000,

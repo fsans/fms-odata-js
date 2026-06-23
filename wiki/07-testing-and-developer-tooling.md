@@ -1,6 +1,6 @@
 # Testing and Developer Tooling
 
-The `fm-odata-js` library maintains a robust testing infrastructure designed to ensure reliability across both simulated and live FileMaker environments. The tooling suite includes a high-coverage unit test suite, an opt-in live integration suite, and specialized developer scripts for environment management and connectivity probing.
+The `fms-odata-js` library maintains a robust testing infrastructure designed to ensure reliability across both simulated and live FileMaker environments. The tooling suite includes a high-coverage unit test suite, an opt-in live integration suite, and specialized developer scripts for environment management and connectivity probing.
 
 ### Test Infrastructure Overview
 
@@ -36,7 +36,7 @@ graph TD
     [".env"] -- "loads via" --> ["scripts/env.mjs"]
     ["scripts/env.mjs"] -- "configures" --> ["scripts/probe.mjs"]
     ["scripts/env.mjs"] -- "configures" --> ["tests/integration/live.test.ts"]
-    ["scripts/insecure-fetch.mjs"] -- "enables TLS bypass" --> ["FMOData Client"]
+    ["scripts/insecure-fetch.mjs"] -- "enables TLS bypass" --> ["FMSOData Client"]
   end
 
   subgraph "Test Suites"
@@ -45,7 +45,7 @@ graph TD
     ["playwright.config.ts"] -- "runs" --> ["E2E Tests"]
   end
 
-  ["FMOData Client"] -- "OData API" --> ["FileMaker Server"]
+  ["FMSOData Client"] -- "OData API" --> ["FileMaker Server"]
   ["scripts/probe.mjs"] -- "validates" --> ["FileMaker Server"]
   ["Integration Tests"] -- "exercises" --> ["FileMaker Server"]
 ```

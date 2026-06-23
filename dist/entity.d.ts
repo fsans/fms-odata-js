@@ -4,7 +4,7 @@
  * invocation, v0.1.4+), and `.container(field)` (container-field binary
  * I/O, v0.1.5+).
  */
-import type { FMOData } from './client.js';
+import type { FMSOData } from './client.js';
 import { ContainerRef, type ContainerJsonValue } from './containers.js';
 import { type ScriptOptions, type ScriptResult } from './scripts.js';
 import type { RequestOptions } from './types.js';
@@ -31,8 +31,8 @@ export interface EntityWriteOptions extends RequestOptions {
 export declare class EntityRef<T = Record<string, unknown>> {
     readonly entitySet: string;
     readonly key: ODataLiteral;
-    /** @internal */ readonly _client: FMOData;
-    constructor(client: FMOData, entitySet: string, key: ODataLiteral);
+    /** @internal */ readonly _client: FMSOData;
+    constructor(client: FMSOData, entitySet: string, key: ODataLiteral);
     /** Absolute URL for this entity. */
     toURL(): string;
     /** `GET` the entity. Returns the parsed JSON row. */
@@ -52,7 +52,7 @@ export declare class EntityRef<T = Record<string, unknown>> {
      * `undefined` on `204 No Content`.
      */
     patch(body: Partial<T> | Record<string, unknown>, opts?: EntityWriteOptions): Promise<T | undefined>;
-    /** `DELETE` the entity. Resolves on success; throws `FMODataError` otherwise. */
+    /** `DELETE` the entity. Resolves on success; throws `FMSODataError` otherwise. */
     delete(opts?: EntityWriteOptions): Promise<void>;
     /**
      * Invoke a FileMaker script in the context of this single record. FMS sets

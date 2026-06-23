@@ -22,7 +22,7 @@
  * @see https://github.com/fsans/fms-odata-spec/blob/main/docs/06-scripts.md
  */
 
-import type { FMOData } from './client.js'
+import type { FMSOData } from './client.js'
 import { FMScriptError } from './errors.js'
 import { executeJson } from './http.js'
 import type { RequestOptions } from './types.js'
@@ -83,16 +83,16 @@ export interface ScriptScope {
 }
 
 /**
- * Low-level handle used internally by `FMOData#script`, `Query#script`, and
+ * Low-level handle used internally by `FMSOData#script`, `Query#script`, and
  * `EntityRef#script`. Exposed so advanced callers can build their own
  * invocation paths if needed.
  */
 export class ScriptInvoker {
-  /** @internal */ readonly _client: FMOData
+  /** @internal */ readonly _client: FMSOData
   readonly entitySet: string | undefined
   readonly key: ODataLiteral | undefined
 
-  constructor(client: FMOData, scope: ScriptScope = {}) {
+  constructor(client: FMSOData, scope: ScriptScope = {}) {
     this._client = client
     if (scope.entitySet !== undefined) this.entitySet = scope.entitySet
     if (scope.key !== undefined) this.key = scope.key
@@ -241,7 +241,7 @@ function extractEnvelope(raw: unknown): {
 
 /** @internal — convenience factory used by client/query/entity helpers. */
 export function runScriptAtDatabase(
-  client: FMOData,
+  client: FMSOData,
   name: string,
   opts?: ScriptOptions,
 ): Promise<ScriptResult> {
@@ -250,7 +250,7 @@ export function runScriptAtDatabase(
 
 /** @internal — convenience factory for FMSID-based invocation. */
 export function runScriptByIdAtDatabase(
-  client: FMOData,
+  client: FMSOData,
   fmsid: number,
   opts?: ScriptOptions,
 ): Promise<ScriptResult> {
@@ -259,7 +259,7 @@ export function runScriptByIdAtDatabase(
 
 /** @internal */
 export function runScriptAtEntitySet(
-  client: FMOData,
+  client: FMSOData,
   entitySet: string,
   name: string,
   opts?: ScriptOptions,
@@ -269,7 +269,7 @@ export function runScriptAtEntitySet(
 
 /** @internal */
 export function runScriptAtEntity(
-  client: FMOData,
+  client: FMSOData,
   entitySet: string,
   key: ODataLiteral,
   name: string,

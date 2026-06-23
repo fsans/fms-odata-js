@@ -1,4 +1,4 @@
-# AGENTS.md — fm-odata-js
+# AGENTS.md — fms-odata-js
 
 ## Overview
 
@@ -8,7 +8,7 @@ Works in Node 18+, browsers, and the FileMaker Web Viewer.
 ## Spec alignment
 
 This library is aligned with the [fms-odata-spec](https://github.com/fsans/fms-odata-spec)
-reference specification and depends on `@fm-odata/spec-ts` (as a devDependency)
+reference specification and depends on `@fms-odata/spec-ts` (as a devDependency)
 for shared type definitions and the version feature matrix. The spec package
 is bundled at build time via esbuild — end users do not need to install it.
 
@@ -33,7 +33,7 @@ Legacy names (still accepted): `FM_ODATA_HOST`, `FM_ODATA_DATABASE`, `FM_ODATA_U
 
 ## Key files
 
-- `src/client.ts` — `FMOData` entrypoint, version detection, feature gating
+- `src/client.ts` — `FMSOData` entrypoint, version detection, feature gating
 - `src/query.ts` — fluent query builder (`$filter`, `$select`, `$expand`, `$apply`, etc.)
 - `src/entity.ts` — single-record handle (CRUD, containers, scripts, `$ref`)
 - `src/scripts.ts` — script invocation (by name and by FMSID)
@@ -41,10 +41,10 @@ Legacy names (still accepted): `FM_ODATA_HOST`, `FM_ODATA_DATABASE`, `FM_ODATA_U
 - `src/metadata.ts` — `$metadata` parser (with ProductVersion extraction)
 - `src/containers.ts` — container field I/O (binary + base64)
 - `src/batch.ts` — `$batch` multipart composer
-- `src/errors.ts` — `FMODataError`, `FMScriptError`, type guards
+- `src/errors.ts` — `FMSODataError`, `FMScriptError`, type guards
 
 ## Bundle constraints
 
 - Zero runtime dependencies (the `dependencies` field in package.json must stay empty)
-- `@fm-odata/spec-ts` is a devDependency only — bundled at build time
+- `@fms-odata/spec-ts` is a devDependency only — bundled at build time
 - Target gzipped size: under 10 KB for ESM min

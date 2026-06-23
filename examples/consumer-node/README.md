@@ -1,6 +1,6 @@
-# fm-odata-js Consumer Example
+# fms-odata-js Consumer Example
 
-A comprehensive demonstration of using `fm-odata-js` (v0.2.0) in a Node.js environment via a local `file:` dependency. This example showcases all major features:
+A comprehensive demonstration of using `fms-odata-js` (v0.3.0) in a Node.js environment via a local `file:` dependency. This example showcases all major features:
 
 | Feature | Demo in this example |
 |---------|----------------------|
@@ -9,9 +9,9 @@ A comprehensive demonstration of using `fm-odata-js` (v0.2.0) in a Node.js envir
 | M4: Container I/O | Download container field content |
 | M5: Metadata | Introspect the OData schema (`$metadata`) |
 | M6: Batch Operations | Atomic changeset + read in one request |
-| v0.2.0: Version Detection | Detect FMS major version and feature flags |
-| v0.2.0: Aggregation (`$apply`) | Server-side countdistinct via `aggregate()` |
-| v0.2.0: Navigation (`$ref`) | List related records via `getRefs()` |
+| v0.3.0: Version Detection | Detect FMS major version and feature flags |
+| v0.3.0: Aggregation (`$apply`) | Server-side countdistinct via `aggregate()` |
+| v0.3.0: Navigation (`$ref`) | List related records via `getRefs()` |
 
 ## Test Database
 
@@ -31,8 +31,8 @@ cd examples/consumer-node
 npm install
 ```
 
-`npm install` symlinks the parent `fm-odata-js` package into
-`node_modules/fm-odata-js`, so any rebuild of the library (`npm run build` in
+`npm install` symlinks the parent `fms-odata-js` package into
+`node_modules/fms-odata-js`, so any rebuild of the library (`npm run build` in
 the repo root) is immediately visible to this example.
 
 ## Run
@@ -78,7 +78,7 @@ address   total=3  first 3 row(s):
 ============================================================
 2. SCRIPT EXECUTION (M3)
 ============================================================
-script    Ping => result="hello-from-fm-odata-js" error=0
+script    Ping => result="hello-from-fms-odata-js" error=0
 
 ============================================================
 3. METADATA INTROSPECTION (M5)
@@ -112,7 +112,7 @@ container field URL: https://fms.example.com/fmi/odata/v4/Contacts/contact(42)/p
 container field "photo" is empty or doesn't exist (this is OK)
 
 ============================================================
-6. AGGREGATION / $apply (v0.2.0)
+6. AGGREGATION / $apply (v0.3.0)
 ============================================================
 $apply    groupby first_name,last_name: 239 distinct combo(s)
   -> Barbara Anderson
@@ -122,7 +122,7 @@ $apply    groupby first_name,last_name: 239 distinct combo(s)
   ... and 234 more
 
 ============================================================
-7. NAVIGATION PROPERTIES / $ref (v0.2.0)
+7. NAVIGATION PROPERTIES / $ref (v0.3.0)
 ============================================================
 $ref      using contact id=1
 $ref      found 2 related address(es)
@@ -146,7 +146,7 @@ const { value, count } = await db.from('contact').top(3).count().get()
 
 ```ts
 const { scriptResult, scriptError } = await db.script('Ping', {
-  parameter: 'hello-from-fm-odata-js',
+  parameter: 'hello-from-fms-odata-js',
 })
 ```
 
@@ -187,7 +187,7 @@ const fresh = await db.metadata({ refresh: true })
 const xml = await db.metadataXml()
 ```
 
-### v0.2.0: Version Detection & Feature Gating
+### v0.3.0: Version Detection & Feature Gating
 
 ```ts
 const version = await db.version()        // '19' | '21' | '22' | '26' | 'future' | null
@@ -195,7 +195,7 @@ const info = await db.versionInfo()       // full descriptor with feature flags
 const ok = await db.hasFeature('applyAggregation') // boolean
 ```
 
-### v0.2.0: Aggregation (`$apply`)
+### v0.3.0: Aggregation (`$apply`)
 
 ```ts
 // Group by fields (works on FMS v22+ and v26)
@@ -220,7 +220,7 @@ const { value: grouped2 } = await db
   .get()
 ```
 
-### v0.2.0: Navigation Properties (`$ref`)
+### v0.3.0: Navigation Properties (`$ref`)
 
 ```ts
 // List related references
@@ -273,7 +273,7 @@ If your consumer project uses TypeScript, the same code works verbatim — the
 library ships `.d.ts` files alongside the bundle. Simply:
 
 ```ts
-import { FMOData, basicAuth, fmidAuth, type QueryResult, type ODataMetadata } from 'fm-odata-js'
+import { FMSOData, basicAuth, fmidAuth, type QueryResult, type ODataMetadata } from 'fms-odata-js'
 
 interface Contact {
   id: number
@@ -281,7 +281,7 @@ interface Contact {
   last_name: string
 }
 
-const db = new FMOData({ /* ... */ })
+const db = new FMSOData({ /* ... */ })
 const result: QueryResult<Contact> = await db.from<Contact>('contact').top(5).get()
 const meta: ODataMetadata = await db.metadata()
 ```

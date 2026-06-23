@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from 'vitest'
-import { FMOData } from '../../src/client.js'
-import type { FMODataOptions } from '../../src/types.js'
+import { FMSOData } from '../../src/client.js'
+import type { FMSODataOptions } from '../../src/types.js'
 
 const BASE = 'https://fms.example.com/fmi/odata/v4/Invoices'
 
@@ -27,9 +27,9 @@ function httpPart(status: number, body: unknown, contentType = 'application/json
 
 function makeClient(
   fetchMock: ReturnType<typeof vi.fn>,
-  overrides: Partial<FMODataOptions> = {},
-): FMOData {
-  return new FMOData({
+  overrides: Partial<FMSODataOptions> = {},
+): FMSOData {
+  return new FMSOData({
     host: 'https://fms.example.com',
     database: 'Invoices',
     token: 'abc',

@@ -26,7 +26,7 @@ export function createFetch({ insecureTls = false } = {}) {
     if (!globalThis.__fmOdataTlsWarned) {
       globalThis.__fmOdataTlsWarned = true
       console.warn(
-        '[fm-odata-js] TLS certificate verification is DISABLED for this process (FM_VERIFY_SSL=0 or FM_ODATA_INSECURE_TLS=1). Dev use only.',
+        '[fms-odata-js] TLS certificate verification is DISABLED for this process (FM_VERIFY_SSL=0 or FM_ODATA_INSECURE_TLS=1). Dev use only.',
       )
     }
   }

@@ -6,13 +6,13 @@
  * URL via `toURL()`. Actual HTTP execution (`.get()`) lands in M3 alongside
  * auth, error handling, and the mock server.
  */
-import type { FMOData } from './client.js';
+import type { FMSOData } from './client.js';
 import { type ContainerJsonValue } from './containers.js';
 import { EntityRef } from './entity.js';
 import { type ScriptOptions, type ScriptResult } from './scripts.js';
 import type { RequestOptions } from './types.js';
 import { type ODataLiteral } from './url.js';
-import type { AggregateFunction } from '@fm-odata/spec-ts';
+import type { AggregateFunction } from '@fms-odata/spec-ts';
 /**
  * Opaque filter expression produced by `filterFactory`. Use `.and()`, `.or()`,
  * `.not()` to compose; pass to `Query#filter`.
@@ -80,8 +80,8 @@ export declare class Query<T = Record<string, unknown>> {
     /** @internal */ readonly _state: QueryOptionsState;
     /** @internal */ readonly _baseUrl: string;
     /** @internal */ readonly _entitySet: string;
-    /** @internal */ readonly _client: FMOData | undefined;
-    constructor(baseUrl: string, entitySet: string, client?: FMOData);
+    /** @internal */ readonly _client: FMSOData | undefined;
+    constructor(baseUrl: string, entitySet: string, client?: FMSOData);
     select(...fields: string[]): this;
     filter(input: FilterInput): this;
     or(input: FilterInput): this;

@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from 'vitest'
-import { FMOData } from '../../src/client.js'
+import { FMSOData } from '../../src/client.js'
 import { parseMetadata } from '../../src/metadata.js'
-import type { FMODataOptions } from '../../src/types.js'
+import type { FMSODataOptions } from '../../src/types.js'
 
 const BASE = 'https://fms.example.com/fmi/odata/v4/Invoices'
 
@@ -14,9 +14,9 @@ function xmlResponse(body: string, status = 200): Response {
 
 function makeClient(
   fetchMock: ReturnType<typeof vi.fn>,
-  overrides: Partial<FMODataOptions> = {},
-): FMOData {
-  return new FMOData({
+  overrides: Partial<FMSODataOptions> = {},
+): FMSOData {
+  return new FMSOData({
     host: 'https://fms.example.com',
     database: 'Invoices',
     token: 'abc',
@@ -141,12 +141,12 @@ describe('parseMetadata', () => {
     expect(meta.raw).toBe(SAMPLE_METADATA)
   })
 
-  it('throws FMODataError for malformed XML', () => {
+  it('throws FMSODataError for malformed XML', () => {
     expect(() => parseMetadata('<invalid')).toThrow('Failed to parse')
   })
 })
 
-describe('FMOData#metadataXml', () => {
+describe('FMSOData#metadataXml', () => {
   it('GETs $metadata endpoint as XML', async () => {
     const fetchMock = vi.fn().mockResolvedValue(xmlResponse(SAMPLE_METADATA))
     const db = makeClient(fetchMock)
@@ -162,7 +162,7 @@ describe('FMOData#metadataXml', () => {
   })
 })
 
-describe('FMOData#metadata', () => {
+describe('FMSOData#metadata', () => {
   it('fetches and parses metadata', async () => {
     const fetchMock = vi.fn().mockResolvedValue(xmlResponse(SAMPLE_METADATA))
     const db = makeClient(fetchMock)

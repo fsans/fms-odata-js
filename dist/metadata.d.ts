@@ -10,7 +10,7 @@
  */
 import { type HttpClientContext } from './http.js';
 import type { RequestOptions } from './types.js';
-import { type FMServerVersion } from '@fm-odata/spec-ts';
+import { type FMServerVersion } from '@fms-odata/spec-ts';
 /** Property on an entity type (field in FileMaker). */
 export interface EdmProperty {
     name: string;
@@ -63,7 +63,7 @@ export interface MetadataOptions extends RequestOptions {
 }
 /**
  * @internal — parse raw CSDL XML into ODataMetadata.
- * Throws FMODataError for malformed XML.
+ * Throws FMSODataError for malformed XML.
  */
 export declare function parseMetadata(xml: string): ODataMetadata;
 /**
@@ -72,7 +72,7 @@ export declare function parseMetadata(xml: string): ODataMetadata;
 export declare function fetchMetadataXml(ctx: HttpClientContext, baseUrl: string, opts?: RequestOptions): Promise<string>;
 /**
  * Metadata fetcher bound to a client. Caches by default; pass `refresh: true` to bypass.
- * @internal — exported for testing; use via `FMOData#metadata()`.
+ * @internal — exported for testing; use via `FMSOData#metadata()`.
  */
 export declare class MetadataFetcher {
     private _ctx;

@@ -1,6 +1,6 @@
 # Script Execution
 
-FileMaker Server (FMS) exposes scripts via the OData v4 **Action** mechanism. This allows external applications to trigger business logic directly within the FileMaker engine. In `fm-odata-js`, script execution is integrated into the fluent API, allowing scripts to be called with specific context (database, table, or record).
+FileMaker Server (FMS) exposes scripts via the OData v4 **Action** mechanism. This allows external applications to trigger business logic directly within the FileMaker engine. In `fms-odata-js`, script execution is integrated into the fluent API, allowing scripts to be called with specific context (database, table, or record).
 
 All script invocations are performed via HTTP `POST` requests to a `Script.<ScriptName>` path suffix [src/scripts.ts:4-9]().
 
@@ -20,7 +20,7 @@ graph TD
   end
 
   subgraph "Code Entity Space"
-    C["FMOData.script()"]
+    C["FMSOData.script()"]
     D["ScriptInvoker.run()"]
     E["executeJson()"]
     F["parseScriptEnvelope()"]
@@ -83,7 +83,7 @@ graph LR
     R["{ 'scriptResult': '...', 'scriptError': '0' }"]
   end
 
-  subgraph "fm-odata-js Entities"
+  subgraph "fms-odata-js Entities"
     P["parseScriptEnvelope()"]
     SR["ScriptResult (Interface)"]
     FE["FMScriptError (Class)"]

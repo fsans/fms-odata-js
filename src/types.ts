@@ -1,5 +1,5 @@
 /**
- * Public TypeScript types for fm-odata-js.
+ * Public TypeScript types for fms-odata-js.
  *
  * These are intentionally minimal during M1 and will be expanded in later
  * milestones (query, CRUD, containers, scripts, metadata, batch).
@@ -9,7 +9,7 @@ export type TokenProvider =
   | string
   | (() => string | Promise<string>)
 
-export interface FMODataOptions {
+export interface FMSODataOptions {
   /** Base FMS host, e.g. `https://fms.example.com` (no trailing slash). */
   host: string
   /** FileMaker database (solution) name. */

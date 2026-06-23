@@ -1,15 +1,15 @@
 {
-  "name": "fm-odata-js",
-  "version": "0.2.0",
+  "name": "fms-odata-js",
+  "version": "0.3.0",
   "description": "Zero-runtime-dependency TypeScript client for FileMaker Server OData v4 (Web Viewer, browser, Node).",
   "type": "module",
-  "main": "./dist/fm-odata.esm.js",
-  "module": "./dist/fm-odata.esm.js",
+  "main": "./dist/fms-odata.esm.js",
+  "module": "./dist/fms-odata.esm.js",
   "types": "./dist/index.d.ts",
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",
-      "import": "./dist/fm-odata.esm.js"
+      "import": "./dist/fms-odata.esm.js"
     }
   },
   "files": [
@@ -23,9 +23,9 @@
   "scripts": {
     "build": "npm run build:types && npm run build:esm && npm run build:min && npm run build:iife",
     "build:types": "tsc -p tsconfig.build.json",
-    "build:esm": "esbuild src/index.ts --bundle --format=esm --target=es2020 --outfile=dist/fm-odata.esm.js",
-    "build:min": "esbuild src/index.ts --bundle --format=esm --target=es2020 --minify --outfile=dist/fm-odata.esm.min.js",
-    "build:iife": "esbuild src/index.ts --bundle --format=iife --global-name=FMODataLib --target=es2017 --minify --outfile=dist/fm-odata.iife.min.js",
+    "build:esm": "esbuild src/index.ts --bundle --format=esm --target=es2020 --outfile=dist/fms-odata.esm.js",
+    "build:min": "esbuild src/index.ts --bundle --format=esm --target=es2020 --minify --outfile=dist/fms-odata.esm.min.js",
+    "build:iife": "esbuild src/index.ts --bundle --format=iife --global-name=FMSODataLib --target=es2017 --minify --outfile=dist/fms-odata.iife.min.js",
     "test": "vitest run",
     "test:unit": "vitest run",
     "test:watch": "vitest",
@@ -33,7 +33,7 @@
     "typecheck": "tsc --noEmit",
     "lint": "eslint \"src/**/*.ts\" \"tests/**/*.ts\"",
     "format": "prettier --write .",
-    "size": "gzip -c dist/fm-odata.esm.min.js | wc -c",
+    "size": "gzip -c dist/fms-odata.esm.min.js | wc -c",
     "probe": "node scripts/probe.mjs"
   },
   "keywords": [
@@ -50,7 +50,7 @@
     "node": ">=18"
   },
   "devDependencies": {
-    "@fm-odata/spec-ts": "^1.1.0",
+    "@fms-odata/spec-ts": "^1.1.0",
     "@playwright/test": "^1.47.0",
     "@types/node": "^20.14.0",
     "@vitest/coverage-v8": "^2.0.0",

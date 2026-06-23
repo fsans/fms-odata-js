@@ -3,21 +3,21 @@ import { type HttpClientContext, type HttpRequestOptions } from './http.js';
 import { type MetadataOptions, type ODataMetadata } from './metadata.js';
 import { Query } from './query.js';
 import { type ScriptOptions, type ScriptResult } from './scripts.js';
-import type { FMODataOptions, RequestOptions } from './types.js';
-import { type FMVersionMajor, type FMVersionInfo, type FMFeatureFlags, type FMServerVersion } from '@fm-odata/spec-ts';
+import type { FMSODataOptions, RequestOptions } from './types.js';
+import { type FMVersionMajor, type FMVersionInfo, type FMFeatureFlags, type FMServerVersion } from '@fms-odata/spec-ts';
 /**
- * `FMOData` is the entrypoint for all OData operations against a FileMaker
+ * `FMSOData` is the entrypoint for all OData operations against a FileMaker
  * Server database. Covers query/CRUD, script invocation, container I/O,
  * `$metadata` introspection, and `$batch` operations.
  */
-export declare class FMOData {
+export declare class FMSOData {
     readonly host: string;
     readonly database: string;
     readonly baseUrl: string;
     readonly timeoutMs: number | undefined;
     /** @internal */ readonly _ctx: HttpClientContext;
     /** @internal */ private _metadataFetcher?;
-    constructor(options: FMODataOptions);
+    constructor(options: FMSODataOptions);
     /**
      * Start a query against the given entity set (FileMaker layout name).
      */
@@ -80,8 +80,8 @@ export declare class FMOData {
     /**
      * Detect the FileMaker Server major version by fetching `$metadata` and
      * parsing the version annotation using a multi-strategy approach (see
-     * `@fm-odata/spec-ts` `parseServerVersion`). The result is cached for the
-     * lifetime of this `FMOData` instance.
+     * `@fms-odata/spec-ts` `parseServerVersion`). The result is cached for the
+     * lifetime of this `FMSOData` instance.
      *
      * Returns the major version string (`'19'`, `'21'`, `'22'`, `'26'`) or
      * `'future'` if the version is newer than the spec knows about. Returns
@@ -97,7 +97,7 @@ export declare class FMOData {
     /**
      * Get the full parsed FileMaker Server version (major, minor, patch, raw)
      * by fetching `$metadata` and parsing the version annotation. The result is
-     * cached for the lifetime of this `FMOData` instance.
+     * cached for the lifetime of this `FMSOData` instance.
      *
      * Returns `null` if the version cannot be determined.
      *

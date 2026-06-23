@@ -1,8 +1,8 @@
 /**
  * OData URL encoding helpers.
  *
- * Aligned with `@fm-odata/spec-ts` for the shared helpers (`escapeStringLiteral`,
- * `formatLiteral`). fm-odata-js keeps its richer implementations for
+ * Aligned with `@fms-odata/spec-ts` for the shared helpers (`escapeStringLiteral`,
+ * `formatLiteral`). fms-odata-js keeps its richer implementations for
  * `formatDateTime`, `parseDateTime`, `odataEncode`, `buildQueryString`, and
  * `encodePathSegment` which go beyond the spec's minimal versions.
  *
@@ -13,7 +13,7 @@
  *   for spaces rather than `+` (required by OData `$filter`) and preserves
  *   commas (required by `$select`, `$orderby`, `$expand`).
  *
- * @see https://github.com/fsans/FM-ODATA_SPEC/blob/main/docs/13-quirks.md
+ * @see https://github.com/fsans/fms-odata-spec/blob/main/docs/13-quirks.md
  */
 /** Any value that can appear on the right-hand side of an OData `$filter` comparison. */
 export type ODataLiteral = string | number | boolean | Date | null | undefined;

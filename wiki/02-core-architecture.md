@@ -1,6 +1,6 @@
 # Core Architecture
 
-The `fm-odata-js` library is designed with a layered, modular architecture that separates the high-level fluent API from the low-level HTTP and URL serialization concerns. This design ensures that the library remains lightweight (~23.9 KB raw / ~7.9 KB gzipped) while providing robust handling for FileMaker Server (FMS) specific behaviors.
+The `fms-odata-js` library is designed with a layered, modular architecture that separates the high-level fluent API from the low-level HTTP and URL serialization concerns. This design ensures that the library remains lightweight (~23.9 KB raw / ~7.9 KB gzipped) while providing robust handling for FileMaker Server (FMS) specific behaviors.
 
 ## System Layering
 
@@ -14,8 +14,8 @@ The following diagram illustrates how the core modules interact, from the public
 ```mermaid
 graph TD
     subgraph "Public API Layer"
-        ["FMOData Class"] -- "creates" --> ["Query Builder"]
-        ["FMOData Class"] -- "manages" --> ["HttpClientContext"]
+        ["FMSOData Class"] -- "creates" --> ["Query Builder"]
+        ["FMSOData Class"] -- "manages" --> ["HttpClientContext"]
     end
 
     subgraph "Operation Layer"
@@ -34,7 +34,7 @@ graph TD
         ["EntityRef"] -- "serializes via" --> ["URL Utilities"]
     end
 
-    ["FMOData Class"]:::code
+    ["FMSOData Class"]:::code
     ["Query Builder"]:::code
     ["EntityRef"]:::code
     ["ScriptInvoker"]:::code
@@ -48,10 +48,10 @@ Sources: [src/index.ts:1-11](), [src/client.ts:1-118](), [src/query.ts:1-255](),
 
 ## Key Components
 
-### FMOData Client
-The `FMOData` class is the primary entry point. It holds the configuration (host, database, and credentials) and manages the `HttpClientContext`. This context is passed internally to every request to ensure consistent authentication and timeout handling. It provides the `.from(entitySet)` method to initiate queries.
+### FMSOData Client
+The `FMSOData` class is the primary entry point. It holds the configuration (host, database, and credentials) and manages the `HttpClientContext`. This context is passed internally to every request to ensure consistent authentication and timeout handling. It provides the `.from(entitySet)` method to initiate queries.
 
-For details, see [FMOData Client](#2.1).
+For details, see [FMSOData Client](#2.1).
 Sources: [src/client.ts:18-35](), [src/types.ts:12-25]()
 
 ### Query & Entity Operations
@@ -87,21 +87,21 @@ graph LR
     subgraph "Code Entity Space"
         A --> ["resolveAuthHeader()"]
         A --> ["basicAuth()"]
-        B --> ["FMOData.from()"]
+        B --> ["FMSOData.from()"]
         B --> ["Query.get()"]
         C --> ["formatLiteral()"]
         C --> ["buildQueryString()"]
-        D --> ["FMODataError"]
+        D --> ["FMSODataError"]
         D --> ["FMScriptError"]
     end
 
     ["resolveAuthHeader()"]:::code
     ["basicAuth()"]:::code
-    ["FMOData.from()"]:::code
+    ["FMSOData.from()"]:::code
     ["Query.get()"]:::code
     ["formatLiteral()"]:::code
     ["buildQueryString()"]:::code
-    ["FMODataError"]:::code
+    ["FMSODataError"]:::code
     ["FMScriptError"]:::code
 
     classDef code font-family:monospace,font-weight:bold;
@@ -121,7 +121,7 @@ Sources: [src/http.ts:25-30](), [src/client.ts:74-78](), [src/url.ts:70-85](), [
 | **Utilities** | OData literal and URL encoding | `url.ts` |
 
 ### Error Hierarchy
-The library uses a specialized error hierarchy to distinguish between transport-level failures and FileMaker-specific logic failures (like script errors). All errors inherit from `FMODataError`, which captures the HTTP status and the OData error payload.
+The library uses a specialized error hierarchy to distinguish between transport-level failures and FileMaker-specific logic failures (like script errors). All errors inherit from `FMSODataError`, which captures the HTTP status and the OData error payload.
 
 For details, see [Error Handling](#2.6).
 Sources: [src/errors.ts:7-45](), [CHANGELOG.md:18-18]()

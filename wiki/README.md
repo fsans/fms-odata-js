@@ -1,6 +1,6 @@
-# fm-odata-js — DeepWiki Documentation
+# fms-odata-js — DeepWiki Documentation
 
-> Auto-exported from [DeepWiki](https://deepwiki.com/fsans/fm-odata-js) on 2026-05-01.
+> Auto-exported from [DeepWiki](https://deepwiki.com/fsans/fms-odata-js) on 2026-05-01.
 
 ## Table of Contents
 
@@ -8,7 +8,7 @@
    1. [Getting Started](01.1-getting-started.md)
    2. [Build System and Distribution](01.2-build-system-and-distribution.md)
 2. [Core Architecture](02-core-architecture.md)
-   1. [FMOData Client](02.1-fmodata-client.md)
+   1. [FMSOData Client](02.1-fmodata-client.md)
    2. [Query Builder](02.2-query-builder.md)
       1. [Filter System](02.2.1-filter-system.md)
    3. [EntityRef — Single-Record Operations](02.3-entityref-single-record-ops.md)

@@ -1,18 +1,18 @@
 import { describe, expect, it } from 'vitest'
-import { FMODataError, parseErrorResponse } from '../../src/errors.js'
+import { FMSODataError, parseErrorResponse } from '../../src/errors.js'
 
 const REQ = { url: 'https://fms.example.com/fmi/odata/v4/DB/x', method: 'GET' as const }
 
-describe('FMODataError', () => {
+describe('FMSODataError', () => {
   it('captures status, code, odataError, and request', () => {
-    const err = new FMODataError('boom', {
+    const err = new FMSODataError('boom', {
       status: 500,
       code: '123',
       odataError: { foo: 1 },
       request: REQ,
     })
     expect(err).toBeInstanceOf(Error)
-    expect(err.name).toBe('FMODataError')
+    expect(err.name).toBe('FMSODataError')
     expect(err.status).toBe(500)
     expect(err.code).toBe('123')
     expect(err.odataError).toEqual({ foo: 1 })

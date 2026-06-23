@@ -1,4 +1,4 @@
-// fm-odata-js comprehensive consumer example (v0.2.0)
+// fms-odata-js comprehensive consumer example (v0.3.0)
 //
 // Demonstrates all major features:
 // - Basic CRUD queries (M1-M2)
@@ -24,7 +24,7 @@
 //   node --env-file=../../.env index.mjs     # Node 20.6+
 //   # or: export the vars yourself and: node index.mjs
 
-import { FMOData, basicAuth, FMODataError, FMScriptError } from 'fm-odata-js'
+import { FMSOData, basicAuth, FMSODataError, FMScriptError } from 'fms-odata-js'
 
 const {
   // Standardized env var names (preferred)
@@ -66,7 +66,7 @@ if (FM_VERIFY_SSL === '0' || FM_ODATA_INSECURE_TLS === '1') {
   console.warn('[example] TLS verification disabled (dev only).\n')
 }
 
-const db = new FMOData({
+const db = new FMSOData({
   host,
   database,
   token: basicAuth(user, password),
@@ -101,7 +101,7 @@ for (const table of ['contact', 'address', 'email', 'phone']) {
       console.log(`  {${keys}${Object.keys(row).length > 4 ? ', ...' : ''}}`)
     }
   } catch (err) {
-    if (err instanceof FMODataError) {
+    if (err instanceof FMSODataError) {
       console.log(`${table.padEnd(8)}  ERROR ${err.status} ${err.code ?? ''} ${err.message}`)
     } else {
       throw err
@@ -117,13 +117,13 @@ console.log('='.repeat(60))
 const scriptName = FM_ODATA_PING_SCRIPT ?? 'Ping'
 try {
   const { scriptResult, scriptError } = await db.script(scriptName, {
-    parameter: 'hello-from-fm-odata-js',
+    parameter: 'hello-from-fms-odata-js',
   })
   console.log(`script    ${scriptName} => result=${JSON.stringify(scriptResult)} error=${scriptError}`)
 } catch (err) {
   if (err instanceof FMScriptError && err.scriptError === '104') {
     console.log(`script    ${scriptName} not present (FM error 104) — skipping`)
-  } else if (err instanceof FMODataError) {
+  } else if (err instanceof FMSODataError) {
     console.log(`script    ${scriptName} HTTP ${err.status} ${err.code ?? ''} ${err.message}`)
   } else {
     throw err
@@ -243,7 +243,7 @@ try {
         console.log(`container filename: ${download.filename}`)
       }
     } catch (containerErr) {
-      if (containerErr instanceof FMODataError) {
+      if (containerErr instanceof FMSODataError) {
         // 404 or 400 usually means empty container or field doesn't exist
         if (containerErr.status === 404 || containerErr.code === '102') {
           console.log(`container field "${containerField}" is empty or doesn't exist (this is OK)`)
@@ -312,7 +312,7 @@ try {
         console.log(`  -> ${ref['@odata.id']}`)
       }
     } catch (refErr) {
-      if (refErr instanceof FMODataError) {
+      if (refErr instanceof FMSODataError) {
         console.log(`$ref      address navigation not available (${refErr.status} ${refErr.message})`)
       } else {
         throw refErr

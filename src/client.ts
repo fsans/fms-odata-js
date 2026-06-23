@@ -3,7 +3,7 @@ import { executeJson, executeRequest, type HttpClientContext, type HttpRequestOp
 import { MetadataFetcher, type MetadataOptions, type ODataMetadata } from './metadata.js'
 import { Query } from './query.js'
 import { runScriptAtDatabase, runScriptByIdAtDatabase, type ScriptOptions, type ScriptResult } from './scripts.js'
-import type { FMODataOptions, RequestOptions } from './types.js'
+import type { FMSODataOptions, RequestOptions } from './types.js'
 import {
   type FMVersionMajor,
   type FMVersionInfo,
@@ -11,14 +11,14 @@ import {
   type FMServerVersion,
   FM_VERSION_MATRIX,
   hasFeature as specHasFeature,
-} from '@fm-odata/spec-ts'
+} from '@fms-odata/spec-ts'
 
 /**
- * `FMOData` is the entrypoint for all OData operations against a FileMaker
+ * `FMSOData` is the entrypoint for all OData operations against a FileMaker
  * Server database. Covers query/CRUD, script invocation, container I/O,
  * `$metadata` introspection, and `$batch` operations.
  */
-export class FMOData {
+export class FMSOData {
   readonly host: string
   readonly database: string
   readonly baseUrl: string
@@ -27,11 +27,11 @@ export class FMOData {
   /** @internal */ readonly _ctx: HttpClientContext
   /** @internal */ private _metadataFetcher?: MetadataFetcher
 
-  constructor(options: FMODataOptions) {
-    if (!options.host) throw new TypeError('FMOData: `host` is required')
-    if (!options.database) throw new TypeError('FMOData: `database` is required')
+  constructor(options: FMSODataOptions) {
+    if (!options.host) throw new TypeError('FMSOData: `host` is required')
+    if (!options.database) throw new TypeError('FMSOData: `database` is required')
     if (options.token === undefined || options.token === null) {
-      throw new TypeError('FMOData: `token` is required')
+      throw new TypeError('FMSOData: `token` is required')
     }
 
     this.host = options.host.replace(/\/+$/, '')
@@ -51,7 +51,7 @@ export class FMOData {
    * Start a query against the given entity set (FileMaker layout name).
    */
   from<T = Record<string, unknown>>(entitySet: string): Query<T> {
-    if (!entitySet) throw new TypeError('FMOData#from: entitySet is required')
+    if (!entitySet) throw new TypeError('FMSOData#from: entitySet is required')
     return new Query<T>(this.baseUrl, entitySet, this)
   }
 
@@ -142,8 +142,8 @@ export class FMOData {
   /**
    * Detect the FileMaker Server major version by fetching `$metadata` and
    * parsing the version annotation using a multi-strategy approach (see
-   * `@fm-odata/spec-ts` `parseServerVersion`). The result is cached for the
-   * lifetime of this `FMOData` instance.
+   * `@fms-odata/spec-ts` `parseServerVersion`). The result is cached for the
+   * lifetime of this `FMSOData` instance.
    *
    * Returns the major version string (`'19'`, `'21'`, `'22'`, `'26'`) or
    * `'future'` if the version is newer than the spec knows about. Returns
@@ -176,7 +176,7 @@ export class FMOData {
   /**
    * Get the full parsed FileMaker Server version (major, minor, patch, raw)
    * by fetching `$metadata` and parsing the version annotation. The result is
-   * cached for the lifetime of this `FMOData` instance.
+   * cached for the lifetime of this `FMSOData` instance.
    *
    * Returns `null` if the version cannot be determined.
    *

@@ -1,6 +1,6 @@
 # Glossary
 
-This page provides definitions for the terminology, architectural concepts, and abbreviations used throughout the `fm-odata-js` codebase. It serves as a reference for onboarding engineers to understand how OData v4 standards intersect with FileMaker Server (FMS) specific implementations.
+This page provides definitions for the terminology, architectural concepts, and abbreviations used throughout the `fms-odata-js` codebase. It serves as a reference for onboarding engineers to understand how OData v4 standards intersect with FileMaker Server (FMS) specific implementations.
 
 ## Core Concepts
 
@@ -68,7 +68,7 @@ A TypeScript union type representing the primitive values that can be safely ser
 ### HttpClientContext (`_ctx`)
 An internal object passed throughout the library to maintain shared state for HTTP requests without exposing it to the end-user.
 *   **Fields**: Includes `fetch` implementation, `token` provider, `timeoutMs`, and `onUnauthorized` callback [src/http.ts:97-105]().
-*   **Usage**: Initialized in `FMOData` constructor and passed to `Query`, `EntityRef`, and `ScriptInvoker` [src/query.ts:140-143]().
+*   **Usage**: Initialized in `FMSOData` constructor and passed to `Query`, `EntityRef`, and `ScriptInvoker` [src/query.ts:140-143]().
 
 ### Fluent Query Builder
 The `Query<T>` class provides a chainable interface for building OData queries. It maintains an internal `QueryOptionsState` which is only serialized to a URL at the moment of execution [src/query.ts:121-133]().
@@ -97,7 +97,7 @@ graph LR
 A handle to a single record in FileMaker, identified by its primary key. Unlike a `Query`, which returns collections, an `EntityRef` performs targeted operations like `PATCH` (update) and `DELETE` [src/entity.ts:2-10]().
 
 ### FMScriptError
-A specialized subclass of `FMODataError`. It is thrown when the HTTP request to a script action succeeds (200 OK), but the FileMaker script itself returns a non-zero error code [src/errors.ts:85-111]().
+A specialized subclass of `FMSODataError`. It is thrown when the HTTP request to a script action succeeds (200 OK), but the FileMaker script itself returns a non-zero error code [src/errors.ts:85-111]().
 *   **scriptError**: The FileMaker error code (e.g., "101" for Record Missing) [src/errors.ts:87]().
 *   **scriptResult**: The string returned by the `Exit Script` step [src/errors.ts:89]().
 

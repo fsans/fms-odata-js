@@ -1,12 +1,12 @@
 # Examples and Integration
 
-The `fm-odata-js` library provides two primary reference implementations to demonstrate its versatility across different JavaScript environments. These examples serve as both a "smoke test" for the library's features and a template for developers to integrate the library into their own projects.
+The `fms-odata-js` library provides two primary reference implementations to demonstrate its versatility across different JavaScript environments. These examples serve as both a "smoke test" for the library's features and a template for developers to integrate the library into their own projects.
 
 The examples demonstrate the library's ability to handle the specific quirks of FileMaker Server (FMS) OData, such as authentication requirements, query construction, and script execution error handling.
 
 ## Integration Architecture
 
-The following diagram illustrates how the examples interact with the `fm-odata-js` library and a FileMaker Server instance.
+The following diagram illustrates how the examples interact with the `fms-odata-js` library and a FileMaker Server instance.
 
 **System Integration Overview**
 ```mermaid
@@ -16,8 +16,8 @@ graph TD
         WebViewer["FileMaker Web Viewer (examples/webviewer)"]
     end
 
-    subgraph "fm-odata-js Library"
-        FMOData["class FMOData"]
+    subgraph "fms-odata-js Library"
+        FMSOData["class FMSOData"]
         Query["class Query"]
         HttpLayer["src/http.ts (executeJson)"]
     end
@@ -28,9 +28,9 @@ graph TD
         FMData["Database Tables"]
     end
 
-    NodeApp -- "instantiates" --> FMOData
-    WebViewer -- "imports via CDN/Blob" --> FMOData
-    FMOData -- "builds" --> Query
+    NodeApp -- "instantiates" --> FMSOData
+    WebViewer -- "imports via CDN/Blob" --> FMSOData
+    FMSOData -- "builds" --> Query
     Query -- "requests via" --> HttpLayer
     HttpLayer -- "Basic Auth / HTTPS" --> ODataAPI
     ODataAPI -- "reads/writes" --> FMData
@@ -62,7 +62,7 @@ The Web Viewer example is located in `examples/webviewer`. It showcases a "singl
 *   **Distribution Variants**: Offers a standard `index.html` (CDN-loaded) and an `index-inline.html` (fully self-contained using a Blob URL trick) to support offline or sandboxed environments [examples/webviewer/README.md:10-17]().
 *   **CORS & Origin Handling**: Addresses the unique challenges of running code in a `null` origin Web Viewer [examples/webviewer/README.md:69-72]().
 *   **UI Integration**: Features a tabbed grid interface that renders data from multiple tables (`contact`, `email`, etc.) using the library's `QueryResult` [examples/webviewer/README.md:7-9]().
-*   **Error Visualization**: Directly surfaces `FMODataError` details, including HTTP status and FMS-specific error codes, to the user [examples/webviewer/README.md:55-56]().
+*   **Error Visualization**: Directly surfaces `FMSODataError` details, including HTTP status and FMS-specific error codes, to the user [examples/webviewer/README.md:55-56]().
 
 For details on embedding and CORS configuration, see **[Web Viewer Example](#6.2)**.
 
@@ -94,17 +94,17 @@ graph LR
     end
 
     subgraph "Library Entities"
-        FMOData["class FMOData"]
+        FMSOData["class FMSOData"]
         BasicAuth["function basicAuth"]
         FMScriptError["class FMScriptError"]
     end
 
-    IndexMJS -- "imports" --> FMOData
+    IndexMJS -- "imports" --> FMSOData
     IndexMJS -- "uses" --> BasicAuth
     IndexMJS -- "catches" --> FMScriptError
     
-    IndexHTML -- "CDN Import" --> FMOData
-    InlineHTML -- "Blob Import" --> FMOData
+    IndexHTML -- "CDN Import" --> FMSOData
+    InlineHTML -- "Blob Import" --> FMSOData
 ```
 Sources: [examples/consumer-node/README.md:87-98](), [examples/webviewer/README.md:50-51]()
 

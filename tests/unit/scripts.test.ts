@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from 'vitest'
-import { FMOData } from '../../src/client.js'
-import { FMODataError, FMScriptError } from '../../src/errors.js'
-import type { FMODataOptions } from '../../src/types.js'
+import { FMSOData } from '../../src/client.js'
+import { FMSODataError, FMScriptError } from '../../src/errors.js'
+import type { FMSODataOptions } from '../../src/types.js'
 
 const BASE = 'https://fms.example.com/fmi/odata/v4/Invoices'
 
@@ -15,9 +15,9 @@ function jsonResponse(body: unknown, init: ResponseInit = {}): Response {
 
 function makeClient(
   fetchMock: ReturnType<typeof vi.fn>,
-  overrides: Partial<FMODataOptions> = {},
-): FMOData {
-  return new FMOData({
+  overrides: Partial<FMSODataOptions> = {},
+): FMSOData {
+  return new FMSOData({
     host: 'https://fms.example.com',
     database: 'Invoices',
     token: 'abc',
@@ -26,7 +26,7 @@ function makeClient(
   })
 }
 
-describe('FMOData#script (database scope)', () => {
+describe('FMSOData#script (database scope)', () => {
   it('POSTs to /<db>/Script.<name> with no body when parameter is omitted', async () => {
     const fetchMock = vi
       .fn()
@@ -147,7 +147,7 @@ describe('script error handling', () => {
 
     const err = await db.script('Boom').catch((e: unknown) => e)
     expect(err).toBeInstanceOf(FMScriptError)
-    expect(err).toBeInstanceOf(FMODataError) // subclass relationship
+    expect(err).toBeInstanceOf(FMSODataError) // subclass relationship
     expect((err as FMScriptError).scriptError).toBe('101')
     expect((err as FMScriptError).scriptResult).toBe('oops')
     expect((err as FMScriptError).status).toBe(200)
@@ -190,7 +190,7 @@ describe('script error handling', () => {
     expect(result.scriptResult).toBe('pong')
   })
 
-  it('surfaces HTTP-level failures as plain FMODataError (not FMScriptError)', async () => {
+  it('surfaces HTTP-level failures as plain FMSODataError (not FMScriptError)', async () => {
     const fetchMock = vi.fn().mockResolvedValue(
       new Response(JSON.stringify({ error: { code: '401', message: 'nope' } }), {
         status: 401,
@@ -199,9 +199,9 @@ describe('script error handling', () => {
     )
     const db = makeClient(fetchMock)
     const err = await db.script('Ping').catch((e: unknown) => e)
-    expect(err).toBeInstanceOf(FMODataError)
+    expect(err).toBeInstanceOf(FMSODataError)
     expect(err).not.toBeInstanceOf(FMScriptError)
-    expect((err as FMODataError).status).toBe(401)
+    expect((err as FMSODataError).status).toBe(401)
   })
 })
 
@@ -244,7 +244,7 @@ describe('script plumbing', () => {
 // FMSID-based script invocation (Phase 3 — requires FMS 26+)
 // ---------------------------------------------------------------------------
 
-describe('FMOData#scriptById (FMSID, database scope)', () => {
+describe('FMSOData#scriptById (FMSID, database scope)', () => {
   it('POSTs to /<db>/Script.FMSID:<id> with no body when parameter is omitted', async () => {
     const fetchMock = vi
       .fn()

@@ -1,6 +1,6 @@
 <div align="center">
 
-# fm-odata-js
+# fms-odata-js
 
 **A tiny, type-safe OData v4 client built for FileMaker Server.**
 
@@ -18,9 +18,9 @@ Zero runtime dependencies · ~9.1 KB gzipped · ESM + IIFE · Web Viewer / Brows
 
 ---
 
-## Why fm-odata-js?
+## Why fms-odata-js?
 
-FileMaker Server speaks OData v4, but the spec has sharp corners and FMS has quirks. `fm-odata-js` smooths both — so you can forget about URL-encoding `$filter` predicates and focus on your data.
+FileMaker Server speaks OData v4, but the spec has sharp corners and FMS has quirks. `fms-odata-js` smooths both — so you can forget about URL-encoding `$filter` predicates and focus on your data.
 
 > **Battle-tested in production.** I've been using this library heavily to let FileMaker Web Viewer instances talk to the *same* hosted database they live in — and the performance has been genuinely impressive. Queries that used to require round-tripping through scripts and set-field loops now resolve in a single OData call, with noticeably lower latency and a much cleaner code path. If you're building rich Web Viewer UIs backed by FMS, this is the fastest route I've found.
 
@@ -36,7 +36,7 @@ FileMaker Server speaks OData v4, but the spec has sharp corners and FMS has qui
 - **Schema introspection.** `$metadata` parsed into typed `ODataMetadata` with entity types, keys, properties, and actions. Cached by default.
 - **Batch requests.** `$batch` builder composes multiple reads and atomic changesets (POST / PATCH / DELETE) into a single HTTP round-trip.
 - **Multi-auth.** Basic, Bearer, and FMID (FileMaker Cloud / Claris ID) auth with 401 retry, `AbortSignal`, and timeouts built in.
-- **Honest errors.** Every failure becomes a normalized `FMODataError` (or `FMScriptError` for script failures) with `isFMODataError` / `isFMScriptError` type guards.
+- **Honest errors.** Every failure becomes a normalized `FMSODataError` (or `FMScriptError` for script failures) with `isFMSODataError` / `isFMScriptError` type guards.
 
 ## Status
 
@@ -58,19 +58,19 @@ Full roadmap and changes live in [`CHANGELOG.md`](./CHANGELOG.md).
 From GitHub:
 
 ```bash
-npm install github:fsans/fm-odata-js
+npm install github:fsans/fms-odata-js
 ```
 
 From a local clone:
 
 ```bash
-npm install /path/to/fm-odata-js
+npm install /path/to/fms-odata-js
 ```
 
 Once published, the canonical install will be:
 
 ```bash
-npm install fm-odata-js
+npm install fms-odata-js
 ```
 
 Local dev:
@@ -83,9 +83,9 @@ npm test          # 227 unit tests, offline
 ## Quick start
 
 ```ts
-import { FMOData, basicAuth } from 'fm-odata-js'
+import { FMSOData, basicAuth } from 'fms-odata-js'
 
-const db = new FMOData({
+const db = new FMSOData({
   host: 'https://fms.example.com',
   database: 'Contacts',
   token: basicAuth('admin', 'secret'), // FMS OData requires Basic auth
@@ -93,7 +93,7 @@ const db = new FMOData({
 })
 
 // For FileMaker Cloud, use FMID auth instead:
-// import { fmidAuth } from 'fm-odata-js'
+// import { fmidAuth } from 'fms-odata-js'
 // token: fmidAuth(clarisIdToken)
 
 // Collection read
@@ -136,10 +136,10 @@ await db.from('contact').byKey(42).script('Archive')
 ```
 
 A non-zero `scriptError` becomes an `FMScriptError` (subclass of
-`FMODataError`), so existing error handlers keep working:
+`FMSODataError`), so existing error handlers keep working:
 
 ```ts
-import { FMScriptError } from 'fm-odata-js'
+import { FMScriptError } from 'fms-odata-js'
 
 try {
   await db.script('Risky')
@@ -278,7 +278,7 @@ batch.changeset(cs => {
 
 The library detects the FileMaker Server major version from the
 `Org.OData.Core.V1.ProductVersion` annotation in `$metadata` and caches it
-for the lifetime of the `FMOData` instance:
+for the lifetime of the `FMSOData` instance:
 
 ```ts
 const v = await db.version()        // '19' | '21' | '22' | '26' | 'future' | null
@@ -368,9 +368,9 @@ FM_LIVE=1 npm test -- tests/integration        # full CRUD against real FMS
 
 The library ships three bundle formats:
 
-- **ESM** (`dist/fm-odata.esm.js`) — for Node, bundlers, and modern browsers
-- **ESM minified** (`dist/fm-odata.esm.min.js`) — ~9.1 KB gzipped, production use
-- **IIFE** (`dist/fm-odata.iife.min.js`) — global `FMODataLib`, for FileMaker Web Viewer and `<script>` tag inclusion without a bundler
+- **ESM** (`dist/fms-odata.esm.js`) — for Node, bundlers, and modern browsers
+- **ESM minified** (`dist/fms-odata.esm.min.js`) — ~9.1 KB gzipped, production use
+- **IIFE** (`dist/fms-odata.iife.min.js`) — global `FMSODataLib`, for FileMaker Web Viewer and `<script>` tag inclusion without a bundler
 
 ## Contributing
 

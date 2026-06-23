@@ -1,18 +1,18 @@
 # Overview
 
-`fm-odata-js` is a tiny, type-safe TypeScript client specifically engineered for FileMaker Server's OData v4 API. It provides a fluent interface for data operations, script execution, and record management while abstracting away the specific "quirks" and deviations found in FileMaker's OData implementation.
+`fms-odata-js` is a tiny, type-safe TypeScript client specifically engineered for FileMaker Server's OData v4 API. It provides a fluent interface for data operations, script execution, and record management while abstracting away the specific "quirks" and deviations found in FileMaker's OData implementation.
 
 ### Key Design Principles
 
 *   **Zero Runtime Dependencies:** The library is built to be extremely lightweight (~9.1 KB gzipped), ensuring fast load times in restricted environments like the FileMaker Web Viewer [README.md:27-27]().
-*   **ESM + IIFE:** Distributed as both an ES module and an IIFE bundle (global `FMODataLib`), making it compatible with modern build tools, Node.js 18+, direct browser imports, and `<script>` tag inclusion without a bundler [package.json:5-8]().
+*   **ESM + IIFE:** Distributed as both an ES module and an IIFE bundle (global `FMSODataLib`), making it compatible with modern build tools, Node.js 18+, direct browser imports, and `<script>` tag inclusion without a bundler [package.json:5-8]().
 *   **FileMaker-Aware:** Automatically handles FMS-specific behaviors such as Basic/FMID auth requirements, specialized date formatting, and script execution envelopes [README.md:30-30]().
 *   **Type Safety:** Provides full TypeScript inference for query building and response handling [README.md:28-28]().
 *   **Version-Aware:** Detects the FileMaker Server major version (19, 21, 22, 26) from `$metadata` and gates features accordingly [README.md:31-31]().
 
 ### System Context
 
-The following diagram illustrates how `fm-odata-js` bridges the gap between JavaScript environments and FileMaker Server.
+The following diagram illustrates how `fms-odata-js` bridges the gap between JavaScript environments and FileMaker Server.
 
 **Bridge: Environment to Code Entity**
 ```mermaid
@@ -24,7 +24,7 @@ graph TD
     end
 
     subgraph "Code Entity Space"
-        D["FMOData Client"]
+        D["FMSOData Client"]
         E["HttpClientContext (_ctx)"]
         F["OData Actions (Scripts)"]
         G["EntitySet / Table"]
@@ -65,7 +65,7 @@ graph LR
     end
 
     subgraph "Library Entities"
-        FMOD["FMOData Class"]
+        FMOD["FMSOData Class"]
         QRY["Query Builder"]
         EREF["EntityRef Class"]
     end
@@ -95,7 +95,7 @@ Sources: [CHANGELOG.md:14-19](), [README.md:114-123](), [src/index.ts:1-10]()
 | **Aggregation** | Server-side `$apply` with `aggregate()` and `groupBy()` (FMS 2024+). |
 | **Navigation Properties** | Full `$ref` CRUD — `getRefs`, `addRef`, `setRef`, `removeRef` for OData relationship links. |
 | **Multi-Auth** | Basic, Bearer, and FMID (FileMaker Cloud / Claris ID) auth with 401 retry. |
-| **Error Handling** | Specialized `FMODataError` and `FMScriptError` with `isFMODataError` / `isFMScriptError` type guards. |
+| **Error Handling** | Specialized `FMSODataError` and `FMScriptError` with `isFMSODataError` / `isFMScriptError` type guards. |
 
 ---
 
@@ -104,7 +104,7 @@ Sources: [CHANGELOG.md:14-19](), [README.md:114-123](), [src/index.ts:1-10]()
 For deeper technical details, please refer to the following pages:
 
 ### [Getting Started](#1.1)
-Step-by-step instructions for installing the library via GitHub or local checkout. Covers initial configuration, including the `.env` setup for development and how to instantiate the `FMOData` client with `basicAuth`.
+Step-by-step instructions for installing the library via GitHub or local checkout. Covers initial configuration, including the `.env` setup for development and how to instantiate the `FMSOData` client with `basicAuth`.
 For details, see [Getting Started](#1.1).
 
 ### [Build System and Distribution](#1.2)

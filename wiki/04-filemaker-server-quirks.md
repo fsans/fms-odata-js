@@ -1,6 +1,6 @@
 # FileMaker Server Quirks
 
-This page serves as a comprehensive reference for the deviations FileMaker Server (FMS) exhibits from the standard OData v4 specification. While FMS provides a powerful OData interface, certain behaviors—ranging from authentication protocols to endpoint availability—require specific handling. The `fm-odata-js` library is designed to abstract these "sharp corners" away, providing a standard OData experience for developers.
+This page serves as a comprehensive reference for the deviations FileMaker Server (FMS) exhibits from the standard OData v4 specification. While FMS provides a powerful OData interface, certain behaviors—ranging from authentication protocols to endpoint availability—require specific handling. The `fms-odata-js` library is designed to abstract these "sharp corners" away, providing a standard OData experience for developers.
 
 ## Overview of FMS Deviations
 
@@ -15,7 +15,7 @@ graph TD
         C["ISO-8601 w/ ms"]
     end
 
-    subgraph "fm-odata-js Logic"
+    subgraph "fms-odata-js Logic"
         D["resolveAuthHeader()"]
         E["Query.count() -> $count=true"]
         F["formatDateTime() -> Strip ms"]
@@ -42,7 +42,7 @@ Unlike the FileMaker Data API, which uses a session-based Bearer token flow, the
 The library handles this via:
 - **`basicAuth()`**: A helper utility to generate the correctly formatted `Basic` string [src/http.ts:44-46]().
 - **`resolveAuthHeader()`**: Logic that detects if the provided token already includes a scheme (like `Basic` or `Bearer`) and applies it, or defaults to `Bearer` for standard OData providers [src/http.ts:33-42]().
-- **401-Retry**: If a request fails with a 401, the `HttpClient` can attempt a single retry if an `onUnauthorized` hook is provided in `FMODataOptions` [src/http.ts:108-115]().
+- **401-Retry**: If a request fails with a 401, the `HttpClient` can attempt a single retry if an `onUnauthorized` hook is provided in `FMSODataOptions` [src/http.ts:108-115]().
 
 For details, see [Authentication Quirks](#4.1).
 

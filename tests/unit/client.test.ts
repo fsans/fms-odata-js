@@ -1,9 +1,9 @@
 import { describe, it, expect, vi } from 'vitest'
-import { FMOData } from '../../src/client.js'
+import { FMSOData } from '../../src/client.js'
 
-describe('FMOData (M1 scaffold)', () => {
+describe('FMSOData (M1 scaffold)', () => {
   it('constructs with minimal options and derives the OData base URL', () => {
-    const db = new FMOData({
+    const db = new FMSOData({
       host: 'https://fms.example.com',
       database: 'Invoices',
       token: 'xxx',
@@ -12,7 +12,7 @@ describe('FMOData (M1 scaffold)', () => {
   })
 
   it('strips trailing slashes from host', () => {
-    const db = new FMOData({
+    const db = new FMSOData({
       host: 'https://fms.example.com/',
       database: 'Invoices',
       token: 'xxx',
@@ -23,13 +23,13 @@ describe('FMOData (M1 scaffold)', () => {
   it('throws when required options are missing', () => {
     expect(
       // @ts-expect-error - intentionally invalid
-      () => new FMOData({ database: 'X', token: 't' }),
+      () => new FMSOData({ database: 'X', token: 't' }),
     ).toThrow(/host/)
   })
 
   it('exposes a .from(entitySet) entry point returning a Query', async () => {
     const { Query } = await import('../../src/query.js')
-    const db = new FMOData({
+    const db = new FMSOData({
       host: 'https://fms.example.com',
       database: 'Invoices',
       token: 'xxx',
@@ -40,7 +40,7 @@ describe('FMOData (M1 scaffold)', () => {
   })
 
   it('throws when .from() is called without an entity set', () => {
-    const db = new FMOData({
+    const db = new FMSOData({
       host: 'https://fms.example.com',
       database: 'Invoices',
       token: 'xxx',
@@ -49,7 +49,7 @@ describe('FMOData (M1 scaffold)', () => {
   })
 
   it('URL-encodes the database name in the base URL', () => {
-    const db = new FMOData({
+    const db = new FMSOData({
       host: 'https://fms.example.com',
       database: 'My Invoices',
       token: 'xxx',
@@ -86,11 +86,11 @@ const METADATA_NO_VERSION = `<?xml version="1.0" encoding="UTF-8"?>
   </edmx:DataServices>
 </edmx:Edmx>`
 
-function makeClientWithMetadata(xml: string): FMOData {
+function makeClientWithMetadata(xml: string): FMSOData {
   const fetchMock = vi.fn().mockResolvedValue(
     new Response(xml, { status: 200, headers: { 'content-type': 'application/xml' } }),
   )
-  return new FMOData({
+  return new FMSOData({
     host: 'https://fms.example.com',
     database: 'Test',
     token: 'xxx',
@@ -98,7 +98,7 @@ function makeClientWithMetadata(xml: string): FMOData {
   })
 }
 
-describe('FMOData version detection', () => {
+describe('FMSOData version detection', () => {
   it('detects version 19 from ProductVersion annotation', async () => {
     const db = makeClientWithMetadata(metadataWithVersion('19.0.1'))
     expect(await db.version()).toBe('19')
@@ -136,7 +136,7 @@ describe('FMOData version detection', () => {
         headers: { 'content-type': 'application/xml' },
       }),
     )
-    const db = new FMOData({
+    const db = new FMSOData({
       host: 'https://fms.example.com',
       database: 'Test',
       token: 'xxx',
@@ -152,7 +152,7 @@ describe('FMOData version detection', () => {
   })
 })
 
-describe('FMOData versionInfo', () => {
+describe('FMSOData versionInfo', () => {
   it('returns full version info for detected version', async () => {
     const db = makeClientWithMetadata(metadataWithVersion('26.0.0'))
     const info = await db.versionInfo()
@@ -169,7 +169,7 @@ describe('FMOData versionInfo', () => {
   })
 })
 
-describe('FMOData hasFeature', () => {
+describe('FMSOData hasFeature', () => {
   it('returns true for features supported by the detected version', async () => {
     const db = makeClientWithMetadata(metadataWithVersion('22.0.1'))
     expect(await db.hasFeature('applyAggregation')).toBe(true)
@@ -235,7 +235,7 @@ function metadataWithServerVersionReversed(version: string): string {
 </edmx:Edmx>`
 }
 
-describe('FMOData multi-strategy version detection', () => {
+describe('FMSOData multi-strategy version detection', () => {
   it('detects version from reversed attribute order (String before Term)', async () => {
     const db = makeClientWithMetadata(metadataWithReversedVersion('21.1.2.500'))
     expect(await db.version()).toBe('21')
@@ -297,7 +297,7 @@ describe('FMOData multi-strategy version detection', () => {
         headers: { 'content-type': 'application/xml' },
       }),
     )
-    const db = new FMOData({
+    const db = new FMSOData({
       host: 'https://fms.example.com',
       database: 'Test',
       token: 'xxx',

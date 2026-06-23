@@ -1,6 +1,6 @@
 # Milestones & Release History
 
-This page summarizes the completed milestones and release history for `fm-odata-js`.
+This page summarizes the completed milestones and release history for `fms-odata-js`.
 
 ## Release Summary
 
@@ -68,8 +68,8 @@ For the full API reference, see [Containers (M4)](05.1-containers-m4).
 M5 delivered a lightweight regex-based XML parser for the `$metadata` EDMX/CSDL endpoint. The parser produces a typed `ODataMetadata` object with no external dependencies and a minimal bundle footprint.
 
 Key features delivered:
-*   `FMOData#metadata(opts?)` — fetches and parses the schema; results cached by default.
-*   `FMOData#metadataXml(opts?)` — returns the raw XML string for debugging.
+*   `FMSOData#metadata(opts?)` — fetches and parses the schema; results cached by default.
+*   `FMSOData#metadataXml(opts?)` — returns the raw XML string for debugging.
 *   Parsed types: `ODataMetadata`, `EdmEntityType`, `EdmEntitySet`, `EdmProperty`, `EdmAction`.
 *   `refresh: true` option to bypass the cache.
 
@@ -82,7 +82,7 @@ For the full API reference, see [Metadata (M5)](05.3-metadata-m5).
 M6 delivered the `$batch` multipart request builder, allowing multiple reads and atomic write groups to be sent in a single HTTP round-trip.
 
 Key features delivered:
-*   `FMOData#batch()` — returns a `Batch` builder.
+*   `FMSOData#batch()` — returns a `Batch` builder.
 *   `Batch#add(op)` — queues a read (GET entity-set with optional query params).
 *   `Batch#changeset(build)` — defines an atomic write group (POST / PATCH / DELETE). All operations succeed or fail together.
 *   `Batch#send(opts?)` — serialises, sends, and parses the multipart response into per-operation `BatchOpResult` objects.
@@ -116,7 +116,7 @@ Released as `v0.2.0`, this version aligns the library with the [fms-odata-spec](
 - **FMSID Script Invocation**: Call scripts by immutable ID instead of name (FMS v26+)
 - **Navigation Properties (`$ref`)**: Full CRUD for OData relationship links (`getRefs`, `addRef`, `setRef`, `removeRef`)
 - **FMID Authentication**: `fmidAuth()` helper for FileMaker Cloud / Claris ID tokens
-- **IIFE Bundle**: New `fm-odata.iife.min.js` for `<script>` tag inclusion without a bundler
+- **IIFE Bundle**: New `fms-odata.iife.min.js` for `<script>` tag inclusion without a bundler
 - **Standardized Env Vars**: `FM_SERVER`, `FM_DATABASE`, `FM_USER`, `FM_PASSWORD`, `FM_VERIFY_SSL` (legacy `FM_ODATA_*` still accepted)
 - **Query Parameter Encoding**: Fixed encoding of `$filter` and `$expand` query options
 - **227 unit tests** (up from 180)
