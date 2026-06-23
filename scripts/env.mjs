@@ -40,7 +40,7 @@ export function loadEnvFile(path = resolve(repoRoot, '.env')) {
 /**
  * Load `.env` and return a typed config object. Missing required fields throw.
  *
- * Env var names are aligned with the FM-ODATA_SPEC standard:
+ * Env var names are aligned with the fms-odata-spec standard:
  *   FM_SERVER, FM_DATABASE, FM_USER, FM_PASSWORD, FM_VERIFY_SSL, FM_TIMEOUT
  *
  * Legacy `FM_ODATA_*` names are still accepted as fallbacks for backward

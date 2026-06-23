@@ -109,7 +109,7 @@ graph LR
 
 ## v0.2.0 — Spec Alignment & Advanced Features
 
-Released as `v0.2.0`, this version aligns the library with the [FM-ODATA_SPEC](https://github.com/fsans/FM-ODATA_SPEC) reference specification and introduces several major features:
+Released as `v0.2.0`, this version aligns the library with the [fms-odata-spec](https://github.com/fsans/fms-odata-spec) reference specification and introduces several major features:
 
 - **Version Detection**: Automatic FMS major version detection from `$metadata` with feature gating (`version()`, `versionInfo()`, `hasFeature()`)
 - **`$apply` Aggregation**: Server-side `aggregate()` and `groupBy()` methods (FMS 2024+)

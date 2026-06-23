@@ -13,7 +13,7 @@
  * - 401 retry via `onUnauthorized` (once).
  * - Error envelope normalization into `FMODataError`.
  *
- * @see https://github.com/fsans/FM-ODATA_SPEC/blob/main/docs/04-authentication.md
+ * @see https://github.com/fsans/fms-odata-spec/blob/main/docs/04-authentication.md
  */
 
 import { parseErrorResponse, FMODataError } from './errors.js'

@@ -7,7 +7,7 @@ Works in Node 18+, browsers, and the FileMaker Web Viewer.
 
 ## Spec alignment
 
-This library is aligned with the [FM-ODATA_SPEC](https://github.com/fsans/FM-ODATA_SPEC)
+This library is aligned with the [fms-odata-spec](https://github.com/fsans/fms-odata-spec)
 reference specification and depends on `@fm-odata/spec-ts` (as a devDependency)
 for shared type definitions and the version feature matrix. The spec package
 is bundled at build time via esbuild — end users do not need to install it.

@@ -358,7 +358,7 @@ FM_LIVE=1 npm test -- tests/integration        # full CRUD against real FMS
 - [`docs/filemaker-quirks.md`](./docs/filemaker-quirks.md) — FMS OData deviations and how this library works around them
 - [`docs/filemaker-odata-container-guide.md`](./docs/filemaker-odata-container-guide.md) — full Claris OData container-operations reference
 - [`CHANGELOG.md`](./CHANGELOG.md) — full release history
-- [FM-ODATA_SPEC](https://github.com/fsans/FM-ODATA_SPEC) — reference specification this library aligns to
+- [fms-odata-spec](https://github.com/fsans/fms-odata-spec) — reference specification this library aligns to
 - [`examples/`](./examples) — runnable sample projects
   - [`consumer-node/`](./examples/consumer-node) — Node CLI consuming the library
   - [`webviewer/`](./examples/webviewer) — **standalone HTML page** ready to drop into a FileMaker Web Viewer (uses the IIFE bundle)

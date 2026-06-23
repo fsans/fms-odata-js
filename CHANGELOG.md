@@ -9,7 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added — Spec alignment with @fm-odata/spec-ts
 
-This release aligns fm-odata-js with the [FM-ODATA_SPEC](https://github.com/fsans/FM-ODATA_SPEC) reference specification. The library now depends on `@fm-odata/spec-ts` (as a devDependency — bundled at build time, zero runtime deps) for shared type definitions and the version feature matrix.
+This release aligns fm-odata-js with the [fms-odata-spec](https://github.com/fsans/fms-odata-spec) reference specification. The library now depends on `@fm-odata/spec-ts` (as a devDependency — bundled at build time, zero runtime deps) for shared type definitions and the version feature matrix.
 
 - **Version detection & feature gating.** `FMOData#version()` lazily fetches `$metadata`, extracts the `Org.OData.Core.V1.ProductVersion` annotation, and caches the detected FileMaker Server major version (`'19'`, `'21'`, `'22'`, `'26'`, or `'future'`). `FMOData#versionInfo()` returns the full version descriptor with feature flags. `FMOData#hasFeature(feature)` checks if the server supports a specific feature (e.g., `applyAggregation`, `scriptsByFMSID`, `webhooks`). 12 unit tests.
 - **`$apply` aggregation support.** `Query#apply(expr)` sets a raw `$apply` expression. `Query#aggregate(expressions)` builds `aggregate(field with function as alias)`. `Query#groupBy(fields, aggregateExpressions?)` builds `groupby((fields),aggregate(...))`. Requires FMS 2024+ (v22). 7 unit tests.

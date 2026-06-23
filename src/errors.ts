@@ -5,7 +5,7 @@
  * spec package). fm-odata-js keeps its own class identity for backward
  * compatibility with existing `instanceof` checks in user code.
  *
- * @see https://github.com/fsans/FM-ODATA_SPEC/blob/main/docs/13-quirks.md
+ * @see https://github.com/fsans/fms-odata-spec/blob/main/docs/13-quirks.md
  */
 export class FMODataError extends Error {
   readonly status: number

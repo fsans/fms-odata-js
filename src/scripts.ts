@@ -19,7 +19,7 @@
  * response envelope is `{ "scriptResult": "...", "scriptError": "0" }`; a
  * non-zero `scriptError` becomes an `FMScriptError`.
  *
- * @see https://github.com/fsans/FM-ODATA_SPEC/blob/main/docs/06-scripts.md
+ * @see https://github.com/fsans/fms-odata-spec/blob/main/docs/06-scripts.md
  */
 
 import type { FMOData } from './client.js'

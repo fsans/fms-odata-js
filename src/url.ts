@@ -13,7 +13,7 @@
  *   for spaces rather than `+` (required by OData `$filter`) and preserves
  *   commas (required by `$select`, `$orderby`, `$expand`).
  *
- * @see https://github.com/fsans/FM-ODATA_SPEC/blob/main/docs/13-quirks.md
+ * @see https://github.com/fsans/fms-odata-spec/blob/main/docs/13-quirks.md
  */
 
 /** Any value that can appear on the right-hand side of an OData `$filter` comparison. */
