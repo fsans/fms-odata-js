@@ -41,15 +41,6 @@ FileMaker Server speaks OData v4, but the spec has sharp corners and FMS has qui
 
 ## Status
 
-| Milestone   | Scope                                                             | State |
-| ----------- | ----------------------------------------------------------------- | :---: |
-| **M1–M3**   | Query builder · collection GET · single-entity CRUD · auth · errors | Done |
-| **M4 · 1/4**| Script execution (database / entity-set / record scope)            | Done (v0.1.4) |
-| **M4 · 2/4**| Containers (binary upload / download / stream)                     | Done (v0.1.5) |
-| **M5**      | `$metadata` (schema introspection)                                 | Done |
-| **M6**      | `$batch` (multipart with changesets)                               | Done |
-| **v0.2.0**  | Spec alignment — version detection, `$apply`, FMSID scripts, `$ref`, FMID auth, IIFE build | Done (v0.2.0) |
-
 Full roadmap and changes live in [`CHANGELOG.md`](./CHANGELOG.md).
 
 ## Spec alignment
@@ -60,9 +51,11 @@ See [`docs/14-reconciliation.md`](https://github.com/fsans/fms-odata-spec/blob/m
 
 ## Install
 
-> **Not yet published to npm.** Until the first release hits the registry, install directly from GitHub or a local checkout.
+```bash
+npm install fms-odata-js
+```
 
-From GitHub:
+From GitHub (latest `main`):
 
 ```bash
 npm install github:fsans/fms-odata-js
@@ -72,12 +65,6 @@ From a local clone:
 
 ```bash
 npm install /path/to/fms-odata-js
-```
-
-Once published, the canonical install will be:
-
-```bash
-npm install fms-odata-js
 ```
 
 Local dev:
