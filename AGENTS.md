@@ -48,3 +48,60 @@ Legacy names (still accepted): `FM_ODATA_HOST`, `FM_ODATA_DATABASE`, `FM_ODATA_U
 - Zero runtime dependencies (the `dependencies` field in package.json must stay empty)
 - `@fms-odata/spec-ts` is a devDependency only — bundled at build time
 - Target gzipped size: under 10 KB for ESM min
+
+## Development workflow
+
+Feature branch workflow with `development` as the integration branch:
+
+```
+feature/*  ->  development  ->  main
+   (PR)         (PR)           (release)
+```
+
+### Branches
+
+- **`main`** — Production-ready code. Only receives PRs from `development`.
+- **`development`** — Integration branch for features. All work lands here first.
+- **`feature/*`** — Individual feature/fix branches (create from `development`).
+
+### Workflow
+
+1. **Start work** — create a feature branch from `development`:
+   ```bash
+   git checkout development
+   git pull origin development
+   git checkout -b feature/my-feature
+   ```
+2. **Develop** — make commits on your feature branch.
+3. **Push** — push the feature branch to origin.
+4. **Create PR** — open a Pull Request from `feature/my-feature` -> `development`.
+5. **Review & merge** — after review, merge into `development`.
+6. **Release** — when ready, create a PR from `development` -> `main`.
+
+### Commit message format
+
+Follow [Conventional Commits](https://www.conventionalcommits.org/):
+
+- `feat:` — new feature
+- `fix:` — bug fix
+- `docs:` — documentation
+- `test:` — tests
+- `refactor:` — code refactoring
+- `chore:` — build/tooling
+- `feat!:` / `fix!:` — breaking change (append `!` after the type)
+
+Example:
+```
+fix: comma encoding in OData query parameters
+
+FileMaker Server rejects %2C in $select, $orderby.
+Added odataEncode() helper to preserve literal commas.
+```
+
+### Pre-PR checklist
+
+- [ ] Tests pass: `npm test`
+- [ ] Build succeeds: `npm run build`
+- [ ] TypeScript compiles: `npx tsc --noEmit`
+- [ ] `CHANGELOG.md` updated (if user-facing change)
+- [ ] Version bumped (if releasing)

@@ -13,6 +13,7 @@ Zero runtime dependencies · ~9.1 KB gzipped · ESM + IIFE · Web Viewer / Brows
 [![Deps](https://img.shields.io/badge/runtime%20deps-0-blue)](#)
 [![Node](https://img.shields.io/badge/node-%3E%3D18-339933?logo=node.js&logoColor=white)](#)
 [![License](https://img.shields.io/badge/license-MIT-black)](./LICENSE)
+[![Spec](https://img.shields.io/badge/spec-fms--odata--spec-FF6B00?logo=filemaker&logoColor=white)](https://github.com/fsans/fms-odata-spec)
 
 </div>
 
@@ -50,6 +51,12 @@ FileMaker Server speaks OData v4, but the spec has sharp corners and FMS has qui
 | **v0.2.0**  | Spec alignment — version detection, `$apply`, FMSID scripts, `$ref`, FMID auth, IIFE build | Done (v0.2.0) |
 
 Full roadmap and changes live in [`CHANGELOG.md`](./CHANGELOG.md).
+
+## Spec alignment
+
+This library follows the [`fms-odata-spec`](https://github.com/fsans/fms-odata-spec) reference specification and depends on [`@fms-odata/spec-ts`](https://www.npmjs.com/package/@fms-odata/spec-ts) (as a devDependency, bundled at build time — zero runtime deps) for shared type definitions and the FileMaker Server version feature matrix. Version detection, feature gating, auth schemes, aggregate functions, and error shapes are all sourced from the spec contract so every implementation in the ecosystem stays in lockstep.
+
+See [`docs/14-reconciliation.md`](https://github.com/fsans/fms-odata-spec/blob/main/docs/14-reconciliation.md) in the spec repo for the full alignment plan.
 
 ## Install
 
