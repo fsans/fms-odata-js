@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added — Schema editing (DDL)
+
+- **`SchemaEditor` class** (`src/schema.ts`) with `createTable`, `addFields`, `deleteTable`, `deleteField`, `createIndex`, `deleteIndex` methods, aligned with `@fms-odata/spec-ts` schema types (`FMFieldDefinition`, `CreateTableParams`, `AddFieldsParams`, `FIELD_TYPES`, `parseFieldType`).
+- **Convenience methods on `FMSOData`**: `db.schema()`, `db.createTable()`, `db.addFields()`, `db.deleteTable()`, `db.deleteField()`, `db.createIndex()`, `db.deleteIndex()`.
+- **Field type validation**: field definitions are validated against the spec's `FIELD_TYPES` array before sending.
+- **Destructive op guard**: `deleteTable` and `deleteField` require an explicit `{ confirm: true }` option to prevent accidental data loss.
+- **Spec type re-exports**: `FIELD_TYPES`, `FIELD_DEFAULTS`, `parseFieldType`, `FMFieldType`, `FMFieldDefault`, `FMFieldDefinition`, `CreateTableParams`, `AddFieldsParams` re-exported from the public API.
+
 ## [0.3.0] - 2026-06-23
 
 ### Changed — Repository and package rename (`fm-odata-js` → `fms-odata-js`)

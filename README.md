@@ -4,12 +4,12 @@
 
 **A tiny, type-safe OData v4 client built for FileMaker Server.**
 
-Zero runtime dependencies · ~9.1 KB gzipped · ESM + IIFE · Web Viewer / Browser / Node 18+
+Zero runtime dependencies · ~10.2 KB gzipped · ESM + IIFE · Web Viewer / Browser / Node 18+
 
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.5-3178c6?logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
 [![OData](https://img.shields.io/badge/OData-v4-0078D4?logo=data&logoColor=white)](https://www.odata.org/)
 [![FileMaker](https://img.shields.io/badge/FileMaker-19.0--26.0-FF6B00?logo=filemaker&logoColor=white)](https://www.claris.com/filemaker/)
-[![Bundle](https://img.shields.io/badge/gzip-~9.1%20KB-brightgreen)](#)
+[![Bundle](https://img.shields.io/badge/gzip-~10.2%20KB-brightgreen)](#)
 [![Deps](https://img.shields.io/badge/runtime%20deps-0-blue)](#)
 [![Node](https://img.shields.io/badge/node-%3E%3D18-339933?logo=node.js&logoColor=white)](#)
 [![License](https://img.shields.io/badge/license-MIT-black)](./LICENSE)
@@ -25,7 +25,7 @@ FileMaker Server speaks OData v4, but the spec has sharp corners and FMS has qui
 
 > **Battle-tested in production.** I've been using this library heavily to let FileMaker Web Viewer instances talk to the *same* hosted database they live in — and the performance has been genuinely impressive. Queries that used to require round-tripping through scripts and set-field loops now resolve in a single OData call, with noticeably lower latency and a much cleaner code path. If you're building rich Web Viewer UIs backed by FMS, this is the fastest route I've found.
 
-- **Tiny.** ESM and IIFE bundles, zero runtime dependencies, ~9.1 KB gzipped.
+- **Tiny.** ESM and IIFE bundles, zero runtime dependencies, ~10.2 KB gzipped.
 - **Type-safe.** Fluent, chainable query builder with full TS inference.
 - **Runs anywhere.** Drop it into a FileMaker Web Viewer, a browser, or Node 18+.
 - **FMS-aware.** Handles the documented FMS OData deviations for you.
@@ -35,6 +35,7 @@ FileMaker Server speaks OData v4, but the spec has sharp corners and FMS has qui
 - **Aggregations.** `$apply` builder for `aggregate()` and `groupBy()` — server-side sum, average, min, max, count (FMS 2024+).
 - **Navigation properties.** Full `$ref` CRUD — `getRefs`, `addRef`, `setRef`, `removeRef` for OData relationship links.
 - **Schema introspection.** `$metadata` parsed into typed `ODataMetadata` with entity types, keys, properties, and actions. Cached by default.
+- **Schema editing (DDL).** Create/delete tables, add/delete fields, create/delete indexes via the `FileMaker_Tables` and `FileMaker_Indexes` system endpoints. Field types validated against the spec; destructive ops guarded by `confirm: true`.
 - **Batch requests.** `$batch` builder composes multiple reads and atomic changesets (POST / PATCH / DELETE) into a single HTTP round-trip.
 - **Multi-auth.** Basic, Bearer, and FMID (FileMaker Cloud / Claris ID) auth with 401 retry, `AbortSignal`, and timeouts built in.
 - **Honest errors.** Every failure becomes a normalized `FMSODataError` (or `FMScriptError` for script failures) with `isFMSODataError` / `isFMScriptError` type guards.
@@ -331,6 +332,49 @@ await db.from('contact').byKey(7).removeRef('addresses', 42)
 await db.from('order').byKey(100).removeRef('customer') // clears single-valued
 ```
 
+## Schema editing (DDL)
+
+Create and delete tables, fields, and indexes via the `FileMaker_Tables` and
+`FileMaker_Indexes` system endpoints. Requires a FileMaker account with full
+access (schema modification) privileges.
+
+```ts
+// Create a table with typed field definitions
+await db.createTable({
+  tableName: 'Company',
+  fields: [
+    { name: 'Company ID', type: 'int', primary: true },
+    { name: 'Company Name', type: 'varchar(100)', nullable: false },
+    { name: 'Notes', type: 'varchar(2000)', global: true },
+    { name: 'Signed Contract', type: 'blob', externalSecurePath: 'ContactMgmt/' },
+  ],
+})
+
+// Add fields to an existing table
+await db.addFields({
+  tableName: 'Company',
+  fields: [{ name: 'Phone', type: 'varchar(30)' }],
+})
+
+// Create an index on a field
+await db.createIndex('Company', 'Company Name')
+
+// Delete an index
+await db.deleteIndex('Company', 'Company Name')
+
+// Delete a field (requires confirm: true — irreversible)
+await db.deleteField('Company', 'OldField', { confirm: true })
+
+// Delete a table and all its records (requires confirm: true — irreversible)
+await db.deleteTable('OldTable', { confirm: true })
+```
+
+Field types follow the spec: `NUMERIC`, `DECIMAL`, `INT`, `DATE`, `TIME`,
+`TIMESTAMP`, `VARCHAR(n)`, `CHARACTER VARYING`, `BLOB`, `VARBINARY`,
+`LONGVARBINARY`, `BINARY VARYING`. Repetitions in brackets (`INT[4]`), text
+length in parentheses (`VARCHAR(200)`). Destructive operations (`deleteTable`,
+`deleteField`) require an explicit `{ confirm: true }` guard.
+
 ## Live integration tests
 
 Copy `.env.sample` to `.env` and fill in real FMS credentials:
@@ -363,7 +407,7 @@ FM_LIVE=1 npm test -- tests/integration        # full CRUD against real FMS
 The library ships three bundle formats:
 
 - **ESM** (`dist/fms-odata.esm.js`) — for Node, bundlers, and modern browsers
-- **ESM minified** (`dist/fms-odata.esm.min.js`) — ~9.1 KB gzipped, production use
+- **ESM minified** (`dist/fms-odata.esm.min.js`) — ~10.2 KB gzipped, production use
 - **IIFE** (`dist/fms-odata.iife.min.js`) — global `FMSODataLib`, for FileMaker Web Viewer and `<script>` tag inclusion without a bundler
 
 ## Contributing

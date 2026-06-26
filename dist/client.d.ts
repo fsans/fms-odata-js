@@ -2,6 +2,7 @@ import { Batch } from './batch.js';
 import { type HttpClientContext, type HttpRequestOptions } from './http.js';
 import { type MetadataOptions, type ODataMetadata } from './metadata.js';
 import { Query } from './query.js';
+import { SchemaEditor, type DeleteSchemaOptions, type SchemaOptions } from './schema.js';
 import { type ScriptOptions, type ScriptResult } from './scripts.js';
 import type { FMSODataOptions, RequestOptions } from './types.js';
 import { type FMVersionMajor, type FMVersionInfo, type FMFeatureFlags, type FMServerVersion } from '@fms-odata/spec-ts';
@@ -134,6 +135,29 @@ export declare class FMSOData {
      * ```
      */
     hasFeature(feature: keyof FMFeatureFlags): Promise<boolean>;
+    /** @internal */ private _schemaEditor?;
+    /**
+     * Get a `SchemaEditor` handle for DDL operations (create/delete tables,
+     * add/delete fields, create/delete indexes). Requires a FileMaker account
+     * with full access privileges.
+     *
+     * ```ts
+     * await db.schema().createTable({ tableName: 'Company', fields: [...] })
+     * ```
+     */
+    schema(): SchemaEditor;
+    /** Convenience: create a table. See {@link SchemaEditor#createTable}. */
+    createTable(params: import('@fms-odata/spec-ts').CreateTableParams, opts?: SchemaOptions): Promise<unknown>;
+    /** Convenience: add fields to a table. See {@link SchemaEditor#addFields}. */
+    addFields(params: import('@fms-odata/spec-ts').AddFieldsParams, opts?: SchemaOptions): Promise<unknown>;
+    /** Convenience: delete a table (requires `confirm: true`). See {@link SchemaEditor#deleteTable}. */
+    deleteTable(tableName: string, opts: DeleteSchemaOptions): Promise<void>;
+    /** Convenience: delete a field (requires `confirm: true`). See {@link SchemaEditor#deleteField}. */
+    deleteField(tableName: string, fieldName: string, opts: DeleteSchemaOptions): Promise<void>;
+    /** Convenience: create an index. See {@link SchemaEditor#createIndex}. */
+    createIndex(tableName: string, fieldName: string, opts?: SchemaOptions): Promise<unknown>;
+    /** Convenience: delete an index. See {@link SchemaEditor#deleteIndex}. */
+    deleteIndex(tableName: string, fieldName: string, opts?: SchemaOptions): Promise<void>;
     /**
      * Create a new `$batch` builder for composing multiple OData operations
      * into a single HTTP round-trip.

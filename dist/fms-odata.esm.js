@@ -827,6 +827,43 @@ function parseServerVersion(metadataXml) {
   return null;
 }
 
+// node_modules/@fms-odata/spec-ts/dist/schema.js
+var FIELD_TYPES = [
+  "NUMERIC",
+  "DECIMAL",
+  "INT",
+  "DATE",
+  "TIME",
+  "TIMESTAMP",
+  "VARCHAR",
+  "CHARACTER VARYING",
+  "BLOB",
+  "VARBINARY",
+  "LONGVARBINARY",
+  "BINARY VARYING"
+];
+var FIELD_DEFAULTS = [
+  "USER",
+  "USERNAME",
+  "CURRENT_USER",
+  "CURRENT_DATE",
+  "CURDATE",
+  "CURRENT_TIME",
+  "CURTIME",
+  "CURRENT_TIMESTAMP",
+  "CURTIMESTAMP"
+];
+function parseFieldType(typeStr) {
+  const lengthMatch = typeStr.match(/\((\d+)\)/);
+  const repMatch = typeStr.match(/\[(\d+)\]/);
+  const baseType = typeStr.replace(/\(.*?\)/, "").replace(/\[.*?\]/, "").trim();
+  return {
+    baseType,
+    length: lengthMatch ? parseInt(lengthMatch[1], 10) : void 0,
+    repetitions: repMatch ? parseInt(repMatch[1], 10) : void 0
+  };
+}
+
 // src/metadata.ts
 function parseBoolAttr(value, defaultValue) {
   if (value === void 0) return defaultValue;
@@ -1951,6 +1988,158 @@ function serializeOptions(s, opts) {
   return pairs.map(([k, v]) => `${k}=${v}`).join(";");
 }
 
+// src/schema.ts
+function validateFieldDefinitions(fields) {
+  for (const f of fields) {
+    if (!f.name) throw new TypeError("SchemaEditor: field `name` is required");
+    if (!f.type) throw new TypeError("SchemaEditor: field `type` is required");
+    const { baseType } = parseFieldType(f.type);
+    const upper = baseType.toUpperCase();
+    if (!FIELD_TYPES.includes(upper)) {
+      throw new TypeError(
+        `SchemaEditor: unsupported field type "${f.type}" (base: "${baseType}"). Supported: ${FIELD_TYPES.join(", ")}`
+      );
+    }
+  }
+}
+var SchemaEditor = class {
+  constructor(client) {
+    this._client = client;
+  }
+  /**
+   * Create a new table with the given field definitions.
+   *
+   * ```ts
+   * await db.schema().createTable({
+   *   tableName: 'Company',
+   *   fields: [
+   *     { name: 'Company ID', type: 'int', primary: true },
+   *     { name: 'Company Name', type: 'varchar(100)', nullable: false },
+   *   ],
+   * })
+   * ```
+   */
+  async createTable(params, opts = {}) {
+    if (!params.tableName) throw new TypeError("SchemaEditor: `tableName` is required");
+    if (!params.fields?.length) throw new TypeError("SchemaEditor: `fields` must be a non-empty array");
+    validateFieldDefinitions(params.fields);
+    const url = `${this._client.baseUrl}/FileMaker_Tables`;
+    return executeJson(this._client._ctx, url, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(params),
+      accept: "json",
+      ...opts.signal ? { signal: opts.signal } : {}
+    });
+  }
+  /**
+   * Add fields to an existing table.
+   *
+   * ```ts
+   * await db.schema().addFields({
+   *   tableName: 'Company',
+   *   fields: [{ name: 'Phone', type: 'varchar(30)' }],
+   * })
+   * ```
+   */
+  async addFields(params, opts = {}) {
+    if (!params.tableName) throw new TypeError("SchemaEditor: `tableName` is required");
+    if (!params.fields?.length) throw new TypeError("SchemaEditor: `fields` must be a non-empty array");
+    validateFieldDefinitions(params.fields);
+    const url = `${this._client.baseUrl}/FileMaker_Tables('${encodePathSegment(params.tableName)}')`;
+    return executeJson(this._client._ctx, url, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ fields: params.fields }),
+      accept: "json",
+      ...opts.signal ? { signal: opts.signal } : {}
+    });
+  }
+  /**
+   * Delete a table and ALL its records. Irreversible.
+   *
+   * Requires `opts.confirm === true` as a safety guard.
+   *
+   * ```ts
+   * await db.schema().deleteTable('OldTable', { confirm: true })
+   * ```
+   */
+  async deleteTable(tableName, opts) {
+    if (!tableName) throw new TypeError("SchemaEditor: `tableName` is required");
+    if (opts.confirm !== true) {
+      throw new TypeError(
+        `SchemaEditor: deleteTable("${tableName}") requires { confirm: true } \u2014 this operation permanently destroys the table and all its records.`
+      );
+    }
+    const url = `${this._client.baseUrl}/FileMaker_Tables('${encodePathSegment(tableName)}')`;
+    await executeJson(this._client._ctx, url, {
+      method: "DELETE",
+      accept: "json",
+      ...opts.signal ? { signal: opts.signal } : {}
+    });
+  }
+  /**
+   * Delete a field from a table. Irreversible.
+   *
+   * Requires `opts.confirm === true` as a safety guard.
+   *
+   * ```ts
+   * await db.schema().deleteField('Company', 'OldField', { confirm: true })
+   * ```
+   */
+  async deleteField(tableName, fieldName, opts) {
+    if (!tableName) throw new TypeError("SchemaEditor: `tableName` is required");
+    if (!fieldName) throw new TypeError("SchemaEditor: `fieldName` is required");
+    if (opts.confirm !== true) {
+      throw new TypeError(
+        `SchemaEditor: deleteField("${tableName}", "${fieldName}") requires { confirm: true } \u2014 this operation permanently destroys the field and all its data.`
+      );
+    }
+    const url = `${this._client.baseUrl}/FileMaker_Tables('${encodePathSegment(tableName)}')/${encodePathSegment(fieldName)}`;
+    await executeJson(this._client._ctx, url, {
+      method: "DELETE",
+      accept: "json",
+      ...opts.signal ? { signal: opts.signal } : {}
+    });
+  }
+  /**
+   * Create an index on a field.
+   *
+   * ```ts
+   * await db.schema().createIndex('Company', 'Company Name')
+   * ```
+   */
+  async createIndex(tableName, fieldName, opts = {}) {
+    if (!tableName) throw new TypeError("SchemaEditor: `tableName` is required");
+    if (!fieldName) throw new TypeError("SchemaEditor: `fieldName` is required");
+    const url = `${this._client.baseUrl}/FileMaker_Indexes/${encodePathSegment(tableName)}`;
+    return executeJson(this._client._ctx, url, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ indexName: fieldName }),
+      accept: "json",
+      ...opts.signal ? { signal: opts.signal } : {}
+    });
+  }
+  /**
+   * Delete an index from a field.
+   *
+   * ```ts
+   * await db.schema().deleteIndex('Company', 'Company Name')
+   * ```
+   */
+  async deleteIndex(tableName, fieldName, opts = {}) {
+    if (!tableName) throw new TypeError("SchemaEditor: `tableName` is required");
+    if (!fieldName) throw new TypeError("SchemaEditor: `fieldName` is required");
+    const url = `${this._client.baseUrl}/FileMaker_Indexes/${encodePathSegment(tableName)}/${encodePathSegment(fieldName)}`;
+    await executeJson(this._client._ctx, url, {
+      method: "DELETE",
+      accept: "json",
+      ...opts.signal ? { signal: opts.signal } : {}
+    });
+  }
+};
+
 // src/client.ts
 var FMSOData = class {
   constructor(options) {
@@ -2139,6 +2328,43 @@ var FMSOData = class {
     return hasFeature(v, feature);
   }
   /**
+   * Get a `SchemaEditor` handle for DDL operations (create/delete tables,
+   * add/delete fields, create/delete indexes). Requires a FileMaker account
+   * with full access privileges.
+   *
+   * ```ts
+   * await db.schema().createTable({ tableName: 'Company', fields: [...] })
+   * ```
+   */
+  schema() {
+    if (!this._schemaEditor) this._schemaEditor = new SchemaEditor(this);
+    return this._schemaEditor;
+  }
+  /** Convenience: create a table. See {@link SchemaEditor#createTable}. */
+  async createTable(params, opts = {}) {
+    return this.schema().createTable(params, opts);
+  }
+  /** Convenience: add fields to a table. See {@link SchemaEditor#addFields}. */
+  async addFields(params, opts = {}) {
+    return this.schema().addFields(params, opts);
+  }
+  /** Convenience: delete a table (requires `confirm: true`). See {@link SchemaEditor#deleteTable}. */
+  async deleteTable(tableName, opts) {
+    return this.schema().deleteTable(tableName, opts);
+  }
+  /** Convenience: delete a field (requires `confirm: true`). See {@link SchemaEditor#deleteField}. */
+  async deleteField(tableName, fieldName, opts) {
+    return this.schema().deleteField(tableName, fieldName, opts);
+  }
+  /** Convenience: create an index. See {@link SchemaEditor#createIndex}. */
+  async createIndex(tableName, fieldName, opts = {}) {
+    return this.schema().createIndex(tableName, fieldName, opts);
+  }
+  /** Convenience: delete an index. See {@link SchemaEditor#deleteIndex}. */
+  async deleteIndex(tableName, fieldName, opts = {}) {
+    return this.schema().deleteIndex(tableName, fieldName, opts);
+  }
+  /**
    * Create a new `$batch` builder for composing multiple OData operations
    * into a single HTTP round-trip.
    *
@@ -2171,6 +2397,8 @@ export {
   Changeset,
   ContainerRef,
   EntityRef,
+  FIELD_DEFAULTS,
+  FIELD_TYPES,
   FMSOData as FMOData,
   FMSODataError as FMODataError,
   FMSOData,
@@ -2183,6 +2411,7 @@ export {
   MetadataFetcher,
   ODATA_PROTOCOL_VERSION,
   Query,
+  SchemaEditor,
   ScriptInvoker,
   basicAuth,
   buildContainerJsonBody,
@@ -2194,6 +2423,7 @@ export {
   isFMSODataError,
   isFMScriptError,
   minVersionForFeature,
+  parseFieldType,
   parseServerVersion,
   parseVersionString,
   sniffContainerMime,
