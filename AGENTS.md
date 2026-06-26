@@ -49,7 +49,7 @@ Legacy names (still accepted): `FM_ODATA_HOST`, `FM_ODATA_DATABASE`, `FM_ODATA_U
 
 - Zero runtime dependencies (the `dependencies` field in package.json must stay empty)
 - `@fms-odata/spec-ts` is a devDependency only — bundled at build time
-- Target gzipped size: under 10 KB for ESM min
+- Target gzipped size: under 12 KB for ESM min (raised from 10 KB after adding schema DDL + webhooks modules)
 
 ## Development workflow
 
