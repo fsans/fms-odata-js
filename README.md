@@ -4,12 +4,12 @@
 
 **A tiny, type-safe OData v4 client built for FileMaker Server.**
 
-Zero runtime dependencies · ~9.1 KB gzipped · ESM + IIFE · Web Viewer / Browser / Node 18+
+Zero runtime dependencies · ~10.6 KB gzipped · ESM + IIFE · Web Viewer / Browser / Node 18+
 
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.5-3178c6?logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
 [![OData](https://img.shields.io/badge/OData-v4-0078D4?logo=data&logoColor=white)](https://www.odata.org/)
 [![FileMaker](https://img.shields.io/badge/FileMaker-19.0--26.0-FF6B00?logo=filemaker&logoColor=white)](https://www.claris.com/filemaker/)
-[![Bundle](https://img.shields.io/badge/gzip-~9.1%20KB-brightgreen)](#)
+[![Bundle](https://img.shields.io/badge/gzip-~10.6%20KB-brightgreen)](#)
 [![Deps](https://img.shields.io/badge/runtime%20deps-0-blue)](#)
 [![Node](https://img.shields.io/badge/node-%3E%3D18-339933?logo=node.js&logoColor=white)](#)
 [![License](https://img.shields.io/badge/license-MIT-black)](./LICENSE)
@@ -25,7 +25,7 @@ FileMaker Server speaks OData v4, but the spec has sharp corners and FMS has qui
 
 > **Battle-tested in production.** I've been using this library heavily to let FileMaker Web Viewer instances talk to the *same* hosted database they live in — and the performance has been genuinely impressive. Queries that used to require round-tripping through scripts and set-field loops now resolve in a single OData call, with noticeably lower latency and a much cleaner code path. If you're building rich Web Viewer UIs backed by FMS, this is the fastest route I've found.
 
-- **Tiny.** ESM and IIFE bundles, zero runtime dependencies, ~9.1 KB gzipped.
+- **Tiny.** ESM and IIFE bundles, zero runtime dependencies, ~10.6 KB gzipped.
 - **Type-safe.** Fluent, chainable query builder with full TS inference.
 - **Runs anywhere.** Drop it into a FileMaker Web Viewer, a browser, or Node 18+.
 - **FMS-aware.** Handles the documented FMS OData deviations for you.
@@ -35,20 +35,13 @@ FileMaker Server speaks OData v4, but the spec has sharp corners and FMS has qui
 - **Aggregations.** `$apply` builder for `aggregate()` and `groupBy()` — server-side sum, average, min, max, count (FMS 2024+).
 - **Navigation properties.** Full `$ref` CRUD — `getRefs`, `addRef`, `setRef`, `removeRef` for OData relationship links.
 - **Schema introspection.** `$metadata` parsed into typed `ODataMetadata` with entity types, keys, properties, and actions. Cached by default.
+- **Schema editing (DDL).** Create/delete tables, add/delete fields, create/delete indexes via the `FileMaker_Tables` and `FileMaker_Indexes` system endpoints. Field types validated against the spec; destructive ops guarded by `confirm: true`.
+- **Webhooks.** Create, remove, get, list, and manually invoke webhooks (FMS 2023+ / v21) with typed params and `endpointHeaders` / `queryHeaders` support.
 - **Batch requests.** `$batch` builder composes multiple reads and atomic changesets (POST / PATCH / DELETE) into a single HTTP round-trip.
 - **Multi-auth.** Basic, Bearer, and FMID (FileMaker Cloud / Claris ID) auth with 401 retry, `AbortSignal`, and timeouts built in.
 - **Honest errors.** Every failure becomes a normalized `FMSODataError` (or `FMScriptError` for script failures) with `isFMSODataError` / `isFMScriptError` type guards.
 
 ## Status
-
-| Milestone   | Scope                                                             | State |
-| ----------- | ----------------------------------------------------------------- | :---: |
-| **M1–M3**   | Query builder · collection GET · single-entity CRUD · auth · errors | Done |
-| **M4 · 1/4**| Script execution (database / entity-set / record scope)            | Done (v0.1.4) |
-| **M4 · 2/4**| Containers (binary upload / download / stream)                     | Done (v0.1.5) |
-| **M5**      | `$metadata` (schema introspection)                                 | Done |
-| **M6**      | `$batch` (multipart with changesets)                               | Done |
-| **v0.2.0**  | Spec alignment — version detection, `$apply`, FMSID scripts, `$ref`, FMID auth, IIFE build | Done (v0.2.0) |
 
 Full roadmap and changes live in [`CHANGELOG.md`](./CHANGELOG.md).
 
@@ -60,9 +53,11 @@ See [`docs/14-reconciliation.md`](https://github.com/fsans/fms-odata-spec/blob/m
 
 ## Install
 
-> **Not yet published to npm.** Until the first release hits the registry, install directly from GitHub or a local checkout.
+```bash
+npm install fms-odata-js
+```
 
-From GitHub:
+From GitHub (latest `main`):
 
 ```bash
 npm install github:fsans/fms-odata-js
@@ -72,12 +67,6 @@ From a local clone:
 
 ```bash
 npm install /path/to/fms-odata-js
-```
-
-Once published, the canonical install will be:
-
-```bash
-npm install fms-odata-js
 ```
 
 Local dev:
@@ -344,6 +333,83 @@ await db.from('contact').byKey(7).removeRef('addresses', 42)
 await db.from('order').byKey(100).removeRef('customer') // clears single-valued
 ```
 
+## Schema editing (DDL)
+
+Create and delete tables, fields, and indexes via the `FileMaker_Tables` and
+`FileMaker_Indexes` system endpoints. Requires a FileMaker account with full
+access (schema modification) privileges.
+
+```ts
+// Create a table with typed field definitions
+await db.createTable({
+  tableName: 'Company',
+  fields: [
+    { name: 'Company ID', type: 'int', primary: true },
+    { name: 'Company Name', type: 'varchar(100)', nullable: false },
+    { name: 'Notes', type: 'varchar(2000)', global: true },
+    { name: 'Signed Contract', type: 'blob', externalSecurePath: 'ContactMgmt/' },
+  ],
+})
+
+// Add fields to an existing table
+await db.addFields({
+  tableName: 'Company',
+  fields: [{ name: 'Phone', type: 'varchar(30)' }],
+})
+
+// Create an index on a field
+await db.createIndex('Company', 'Company Name')
+
+// Delete an index
+await db.deleteIndex('Company', 'Company Name')
+
+// Delete a field (requires confirm: true — irreversible)
+await db.deleteField('Company', 'OldField', { confirm: true })
+
+// Delete a table and all its records (requires confirm: true — irreversible)
+await db.deleteTable('OldTable', { confirm: true })
+```
+
+Field types follow the spec: `NUMERIC`, `DECIMAL`, `INT`, `DATE`, `TIME`,
+`TIMESTAMP`, `VARCHAR(n)`, `CHARACTER VARYING`, `BLOB`, `VARBINARY`,
+`LONGVARBINARY`, `BINARY VARYING`. Repetitions in brackets (`INT[4]`), text
+length in parentheses (`VARCHAR(200)`). Destructive operations (`deleteTable`,
+`deleteField`) require an explicit `{ confirm: true }` guard.
+
+## Webhooks
+
+Manage FileMaker Server webhooks — requires FMS 2023+ (v21). Use
+`hasFeature('webhooks')` to check before calling.
+
+```ts
+// Create a webhook that fires on record changes in the contact table
+const result = await db.createWebhook({
+  webhook: 'https://my.example.com:8080/webhook',
+  tableName: 'contact',
+  select: 'id,first_name,last_name',
+  filter: "status eq 'active'",
+  notifySchemaChanges: true,
+  maxFailedAttempts: 10,
+})
+
+// List all webhooks
+const all = await db.getAllWebhooks()
+
+// Get a specific webhook's data
+const data = await db.getWebhook('wh-id')
+
+// Manually invoke a webhook (useful for testing)
+await db.invokeWebhook('wh-id')
+
+// Remove a webhook
+await db.removeWebhook('wh-id')
+```
+
+The `endpointHeaders` / `queryHeaders` split is supported: `endpointHeaders`
+are sent to the webhook URL without affecting processing, while `queryHeaders`
+control how the payload is generated. The legacy `headers` alias for
+`endpointHeaders` is accepted for backward compatibility.
+
 ## Live integration tests
 
 Copy `.env.sample` to `.env` and fill in real FMS credentials:
@@ -376,7 +442,7 @@ FM_LIVE=1 npm test -- tests/integration        # full CRUD against real FMS
 The library ships three bundle formats:
 
 - **ESM** (`dist/fms-odata.esm.js`) — for Node, bundlers, and modern browsers
-- **ESM minified** (`dist/fms-odata.esm.min.js`) — ~9.1 KB gzipped, production use
+- **ESM minified** (`dist/fms-odata.esm.min.js`) — ~10.6 KB gzipped, production use
 - **IIFE** (`dist/fms-odata.iife.min.js`) — global `FMSODataLib`, for FileMaker Web Viewer and `<script>` tag inclusion without a bundler
 
 ## Contributing

@@ -42,6 +42,8 @@ Legacy names (still accepted): `FM_ODATA_HOST`, `FM_ODATA_DATABASE`, `FM_ODATA_U
 - `src/containers.ts` — container field I/O (binary + base64)
 - `src/batch.ts` — `$batch` multipart composer
 - `src/errors.ts` — `FMSODataError`, `FMScriptError`, type guards
+- `src/schema.ts` — schema DDL (create/delete tables, fields, indexes)
+- `src/webhooks.ts` — webhook management (create, remove, get, getAll, invoke)
 
 ## Bundle constraints
 

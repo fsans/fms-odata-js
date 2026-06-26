@@ -7,6 +7,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added — Schema editing (DDL)
+
+- **`SchemaEditor` class** (`src/schema.ts`) with `createTable`, `addFields`, `deleteTable`, `deleteField`, `createIndex`, `deleteIndex` methods, aligned with `@fms-odata/spec-ts` schema types (`FMFieldDefinition`, `CreateTableParams`, `AddFieldsParams`, `FIELD_TYPES`, `parseFieldType`).
+- **Convenience methods on `FMSOData`**: `db.schema()`, `db.createTable()`, `db.addFields()`, `db.deleteTable()`, `db.deleteField()`, `db.createIndex()`, `db.deleteIndex()`.
+- **Field type validation**: field definitions are validated against the spec's `FIELD_TYPES` array before sending.
+- **Destructive op guard**: `deleteTable` and `deleteField` require an explicit `{ confirm: true }` option to prevent accidental data loss.
+- **Spec type re-exports**: `FIELD_TYPES`, `FIELD_DEFAULTS`, `parseFieldType`, `FMFieldType`, `FMFieldDefault`, `FMFieldDefinition`, `CreateTableParams`, `AddFieldsParams` re-exported from the public API.
+
+### Added — Webhook management
+
+- **`WebhookManager` class** (`src/webhooks.ts`) with `create`, `remove`, `get`, `getAll`, `invoke` methods, aligned with `@fms-odata/spec-ts` webhook types (`WebhookCreateParams`, `WebhookData`, `WebhookOperation`).
+- **Convenience methods on `FMSOData`**: `db.webhooks()`, `db.createWebhook()`, `db.removeWebhook()`, `db.getWebhook()`, `db.getAllWebhooks()`, `db.invokeWebhook()`.
+- **Legacy `headers` alias**: the `headers` field in `WebhookCreateParams` is automatically mapped to `endpointHeaders` for backward compatibility.
+- **Spec type re-exports**: `WebhookCreateParams`, `WebhookData`, `WebhookOperation` re-exported from the public API.
+- Requires FileMaker Server 2023+ (v21). Use `db.hasFeature('webhooks')` to check.
+
 ## [0.3.0] - 2026-06-23
 
 ### Changed — Repository and package rename (`fm-odata-js` → `fms-odata-js`)

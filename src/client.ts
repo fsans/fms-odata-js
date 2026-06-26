@@ -2,8 +2,10 @@ import { Batch } from './batch.js'
 import { executeJson, executeRequest, type HttpClientContext, type HttpRequestOptions } from './http.js'
 import { MetadataFetcher, type MetadataOptions, type ODataMetadata } from './metadata.js'
 import { Query } from './query.js'
+import { SchemaEditor, type DeleteSchemaOptions, type SchemaOptions } from './schema.js'
 import { runScriptAtDatabase, runScriptByIdAtDatabase, type ScriptOptions, type ScriptResult } from './scripts.js'
 import type { FMSODataOptions, RequestOptions } from './types.js'
+import { WebhookManager, type WebhookOptions } from './webhooks.js'
 import {
   type FMVersionMajor,
   type FMVersionInfo,
@@ -232,6 +234,121 @@ export class FMSOData {
     const v = await this.version()
     if (!v) return false
     return specHasFeature(v, feature)
+  }
+
+  // -------------------------------------------------------------------------
+  // Schema modification (DDL)
+  // -------------------------------------------------------------------------
+
+  /** @internal */ private _schemaEditor?: SchemaEditor
+
+  /**
+   * Get a `SchemaEditor` handle for DDL operations (create/delete tables,
+   * add/delete fields, create/delete indexes). Requires a FileMaker account
+   * with full access privileges.
+   *
+   * ```ts
+   * await db.schema().createTable({ tableName: 'Company', fields: [...] })
+   * ```
+   */
+  schema(): SchemaEditor {
+    if (!this._schemaEditor) this._schemaEditor = new SchemaEditor(this)
+    return this._schemaEditor
+  }
+
+  /** Convenience: create a table. See {@link SchemaEditor#createTable}. */
+  async createTable(
+    params: import('@fms-odata/spec-ts').CreateTableParams,
+    opts: SchemaOptions = {},
+  ): Promise<unknown> {
+    return this.schema().createTable(params, opts)
+  }
+
+  /** Convenience: add fields to a table. See {@link SchemaEditor#addFields}. */
+  async addFields(
+    params: import('@fms-odata/spec-ts').AddFieldsParams,
+    opts: SchemaOptions = {},
+  ): Promise<unknown> {
+    return this.schema().addFields(params, opts)
+  }
+
+  /** Convenience: delete a table (requires `confirm: true`). See {@link SchemaEditor#deleteTable}. */
+  async deleteTable(tableName: string, opts: DeleteSchemaOptions): Promise<void> {
+    return this.schema().deleteTable(tableName, opts)
+  }
+
+  /** Convenience: delete a field (requires `confirm: true`). See {@link SchemaEditor#deleteField}. */
+  async deleteField(
+    tableName: string,
+    fieldName: string,
+    opts: DeleteSchemaOptions,
+  ): Promise<void> {
+    return this.schema().deleteField(tableName, fieldName, opts)
+  }
+
+  /** Convenience: create an index. See {@link SchemaEditor#createIndex}. */
+  async createIndex(
+    tableName: string,
+    fieldName: string,
+    opts: SchemaOptions = {},
+  ): Promise<unknown> {
+    return this.schema().createIndex(tableName, fieldName, opts)
+  }
+
+  /** Convenience: delete an index. See {@link SchemaEditor#deleteIndex}. */
+  async deleteIndex(
+    tableName: string,
+    fieldName: string,
+    opts: SchemaOptions = {},
+  ): Promise<void> {
+    return this.schema().deleteIndex(tableName, fieldName, opts)
+  }
+
+  // -------------------------------------------------------------------------
+  // Webhook management (requires FileMaker Server 2023+ / v21)
+  // -------------------------------------------------------------------------
+
+  /** @internal */ private _webhookManager?: WebhookManager
+
+  /**
+   * Get a `WebhookManager` handle for webhook CRUD operations (create, remove,
+   * get, getAll, invoke). Requires FileMaker Server 2023+ (v21).
+   *
+   * ```ts
+   * await db.webhooks().create({ webhook: 'https://...', tableName: 'contact' })
+   * ```
+   */
+  webhooks(): WebhookManager {
+    if (!this._webhookManager) this._webhookManager = new WebhookManager(this)
+    return this._webhookManager
+  }
+
+  /** Convenience: create a webhook. See {@link WebhookManager#create}. */
+  async createWebhook(
+    params: import('@fms-odata/spec-ts').WebhookCreateParams,
+    opts: WebhookOptions = {},
+  ): Promise<unknown> {
+    return this.webhooks().create(params, opts)
+  }
+
+  /** Convenience: remove a webhook by ID. See {@link WebhookManager#remove}. */
+  async removeWebhook(id: string, opts: WebhookOptions = {}): Promise<unknown> {
+    return this.webhooks().remove(id, opts)
+  }
+
+  /** Convenience: get a webhook by ID. See {@link WebhookManager#get}. */
+  async getWebhook(id: string, opts: WebhookOptions = {}): Promise<unknown> {
+    return this.webhooks().get(id, opts)
+  }
+
+  /** Convenience: list all webhooks. See {@link WebhookManager#getAll}. */
+  async getAllWebhooks(opts: WebhookOptions = {}): Promise<unknown> {
+    return this.webhooks().getAll(opts)
+  }
+
+  /** Convenience: manually invoke a webhook by ID. See {@link WebhookManager#invoke}. */
+  async invokeWebhook(id: string, opts: WebhookOptions = {}): Promise<unknown> {
+    return this.webhooks().invoke(id, opts)
   }
 
   /**
