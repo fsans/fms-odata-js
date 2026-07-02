@@ -9,7 +9,7 @@
  *   POST /<db>/Webhook.GetAll   — list all webhooks
  *   POST /<db>/Webhook.Invoke   — manually trigger a webhook (for testing)
  *
- * Webhooks require FileMaker Server 2023+ (v21). Use
+ * Webhooks require FileMaker Server 2025+ (v22). Use
  * `db.hasFeature('webhooks')` to check before calling.
  *
  * @see https://github.com/fsans/fms-odata-spec/blob/main/docs/09-webhooks.md
@@ -48,7 +48,7 @@ function normalizeCreateParams(params: WebhookCreateParams): Record<string, unkn
  * Obtain an instance via `db.webhooks()` or use the convenience methods on
  * `FMSOData` (`db.createWebhook`, `db.removeWebhook`, etc.).
  *
- * Requires FileMaker Server 2023+ (v21).
+ * Requires FileMaker Server 2025+ (v22).
  */
 export class WebhookManager {
   /** @internal */ readonly _client: FMSOData

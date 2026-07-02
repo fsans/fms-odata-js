@@ -249,6 +249,6 @@ describe('Metadata with empty elements', () => {
   </edmx:DataServices>
 </edmx:Edmx>`
     const meta = parseMetadata(xml)
-    expect(meta.entityTypes[0].properties).toHaveLength(2)
+    expect(meta.entityTypes[0]!.properties).toHaveLength(2)
   })
 })

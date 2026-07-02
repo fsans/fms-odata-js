@@ -147,7 +147,7 @@ export class FMSOData {
    * `@fms-odata/spec-ts` `parseServerVersion`). The result is cached for the
    * lifetime of this `FMSOData` instance.
    *
-   * Returns the major version string (`'19'`, `'21'`, `'22'`, `'26'`) or
+   * Returns the major version string (`'20'`, `'21'`, `'22'`, `'26'`) or
    * `'future'` if the version is newer than the spec knows about. Returns
    * `null` if the version cannot be determined (e.g. the metadata lacks the
    * annotation).
@@ -305,14 +305,14 @@ export class FMSOData {
   }
 
   // -------------------------------------------------------------------------
-  // Webhook management (requires FileMaker Server 2023+ / v21)
+  // Webhook management (requires FileMaker Server 2025+ / v22)
   // -------------------------------------------------------------------------
 
   /** @internal */ private _webhookManager?: WebhookManager
 
   /**
    * Get a `WebhookManager` handle for webhook CRUD operations (create, remove,
-   * get, getAll, invoke). Requires FileMaker Server 2023+ (v21).
+   * get, getAll, invoke). Requires FileMaker Server 2025+ (v22).
    *
    * ```ts
    * await db.webhooks().create({ webhook: 'https://...', tableName: 'contact' })

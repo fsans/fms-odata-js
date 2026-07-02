@@ -50,7 +50,7 @@
     "node": ">=18"
   },
   "devDependencies": {
-    "@fms-odata/spec-ts": "^1.1.0",
+    "@fms-odata/spec-ts": "^2.0.0",
     "@playwright/test": "^1.47.0",
     "@types/node": "^20.14.0",
     "@vitest/coverage-v8": "^2.0.0",

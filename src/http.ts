@@ -8,7 +8,7 @@
  * timeout composition, browser/Web Viewer compatibility).
  *
  * Responsibilities:
- * - Authorization header resolution (Basic, Bearer, or FMID, auto-detected).
+ * - Authorization header resolution (Basic or Bearer/OAuth, auto-detected).
  * - Timeout + AbortSignal composition.
  * - 401 retry via `onUnauthorized` (once).
  * - Error envelope normalization into `FMSODataError`.
@@ -19,8 +19,8 @@
 import { parseErrorResponse, FMSODataError } from './errors.js'
 import type { TokenProvider, RequestOptions } from './types.js'
 
-/** A scheme-prefixed Authorization value (e.g. `Basic …`, `Bearer …`, or `FMID …`). */
-const AUTH_SCHEME_RE = /^(basic|bearer|fmid|negotiate|digest)\s+\S/i
+/** A scheme-prefixed Authorization value (e.g. `Basic …` or `Bearer …`). */
+const AUTH_SCHEME_RE = /^(basic|bearer|negotiate|digest)\s+\S/i
 
 /** Resolve a `TokenProvider` to a complete Authorization header value. */
 export async function resolveAuthHeader(provider: TokenProvider): Promise<string> {
@@ -45,9 +45,9 @@ export function basicAuth(user: string, password: string): string {
   return `Basic ${b64}`
 }
 
-/** Build an FMID auth header value for FileMaker Cloud (Claris ID token). */
-export function fmidAuth(token: string): string {
-  return `FMID ${token}`
+/** Build a Bearer auth header value for an OAuth session token (FileMaker Cloud / external IdP). */
+export function bearerAuth(token: string): string {
+  return `Bearer ${token}`
 }
 
 /** Auth scheme type (aligned with spec). */

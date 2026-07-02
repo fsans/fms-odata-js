@@ -7,6 +7,30 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed — Spec alignment with `@fms-odata/spec-ts` 2.0.0
+
+Bumped the shared spec dependency from `^1.1.0` to `^2.0.0` and aligned the
+client with the v2.0.0 spec overhaul (drop FileMaker 19.x, corrected version
+history, OAuth/Bearer auth).
+
+- **Dependency:** `@fms-odata/spec-ts` `^1.1.0` → `^2.0.0`.
+- **Auth:** replaced the deprecated `fmidAuth()` helper (which produced the
+  now-removed `FMID …` scheme) with `bearerAuth()` producing `Bearer …`
+  headers, matching the spec's `FMOAuthAuthConfig` / `bearerAuth()`. The
+  `FMID` scheme is no longer recognized by `resolveAuthHeader`.
+- **Version baseline:** FileMaker 19.x is no longer in the spec. The minimum
+  recognized major version is now `'20'` (Claris FileMaker 2023). Version
+  detection of a `19.x` server now resolves to `'future'` instead of `'19'`.
+- **Version names:** corrected year mapping — `'21'` → FileMaker 2024,
+  `'22'` → FileMaker 2025 (previously 2023 / 2024 respectively).
+- **Webhooks:** the spec now attributes webhooks to v22 (FileMaker 2025)
+  rather than v21. Updated doc comments accordingly; runtime feature gating
+  is driven by the spec matrix so behavior follows automatically.
+- **`$apply` aggregation:** doc comments updated to FileMaker 2025+ (v22).
+- **Tests:** updated version-detection tests to the new baseline (`'20'`)
+  and corrected year-name labels. Fixed pre-existing `possibly 'undefined'`
+  type errors in batch/metadata/integration tests so `tsc --noEmit` is clean.
+
 ### Added — Schema editing (DDL)
 
 - **`SchemaEditor` class** (`src/schema.ts`) with `createTable`, `addFields`, `deleteTable`, `deleteField`, `createIndex`, `deleteIndex` methods, aligned with `@fms-odata/spec-ts` schema types (`FMFieldDefinition`, `CreateTableParams`, `AddFieldsParams`, `FIELD_TYPES`, `parseFieldType`).
@@ -21,7 +45,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Convenience methods on `FMSOData`**: `db.webhooks()`, `db.createWebhook()`, `db.removeWebhook()`, `db.getWebhook()`, `db.getAllWebhooks()`, `db.invokeWebhook()`.
 - **Legacy `headers` alias**: the `headers` field in `WebhookCreateParams` is automatically mapped to `endpointHeaders` for backward compatibility.
 - **Spec type re-exports**: `WebhookCreateParams`, `WebhookData`, `WebhookOperation` re-exported from the public API.
-- Requires FileMaker Server 2023+ (v21). Use `db.hasFeature('webhooks')` to check.
+- Requires FileMaker Server 2025+ (v22). Use `db.hasFeature('webhooks')` to check.
 
 ## [0.3.0] - 2026-06-23
 

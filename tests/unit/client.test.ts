@@ -99,17 +99,17 @@ function makeClientWithMetadata(xml: string): FMSOData {
 }
 
 describe('FMSOData version detection', () => {
-  it('detects version 19 from ProductVersion annotation', async () => {
-    const db = makeClientWithMetadata(metadataWithVersion('19.0.1'))
-    expect(await db.version()).toBe('19')
+  it('detects version 20 (FileMaker 2023, baseline) from ProductVersion annotation', async () => {
+    const db = makeClientWithMetadata(metadataWithVersion('20.0.1'))
+    expect(await db.version()).toBe('20')
   })
 
-  it('detects version 21 (FileMaker 2023)', async () => {
+  it('detects version 21 (FileMaker 2024)', async () => {
     const db = makeClientWithMetadata(metadataWithVersion('21.1.2'))
     expect(await db.version()).toBe('21')
   })
 
-  it('detects version 22 (FileMaker 2024)', async () => {
+  it('detects version 22 (FileMaker 2025)', async () => {
     const db = makeClientWithMetadata(metadataWithVersion('22.0.1'))
     expect(await db.version()).toBe('22')
   })
@@ -177,7 +177,7 @@ describe('FMSOData hasFeature', () => {
   })
 
   it('returns false for features not supported by the detected version', async () => {
-    const db = makeClientWithMetadata(metadataWithVersion('19.0.1'))
+    const db = makeClientWithMetadata(metadataWithVersion('20.0.1'))
     expect(await db.hasFeature('applyAggregation')).toBe(false)
     expect(await db.hasFeature('webhooks')).toBe(false)
     expect(await db.hasFeature('scriptsByFMSID')).toBe(false)
