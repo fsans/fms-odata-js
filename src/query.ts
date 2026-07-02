@@ -212,14 +212,14 @@ export class Query<T = Record<string, unknown>> {
   }
 
   // -------------------------------------------------------------------------
-  // $apply (aggregation) — requires FMS 22.0.1+ (FileMaker 2024)
+  // $apply (aggregation) — requires FMS 22.0.1+ (FileMaker 2025)
   // -------------------------------------------------------------------------
 
   /**
    * Set a raw `$apply` expression. Use this for advanced transformations
    * that the `aggregate()` / `groupBy()` helpers don't cover.
    *
-   * Requires FileMaker Server 2024+ (v22). Use `db.hasFeature('applyAggregation')`
+   * Requires FileMaker Server 2025+ (v22). Use `db.hasFeature('applyAggregation')`
    * to check before calling.
    *
    * @example
@@ -236,7 +236,7 @@ export class Query<T = Record<string, unknown>> {
   /**
    * Aggregate the entity set. Produces a `$apply=aggregate(...)` expression.
    *
-   * Requires FileMaker Server 2024+ (v22).
+   * Requires FileMaker Server 2025+ (v22).
    *
    * @example
    * ```ts
@@ -256,7 +256,7 @@ export class Query<T = Record<string, unknown>> {
    * Group the entity set by one or more fields, optionally with aggregation.
    * Produces a `$apply=groupby((fields), aggregate(...))` expression.
    *
-   * Requires FileMaker Server 2024+ (v22).
+   * Requires FileMaker Server 2025+ (v22).
    *
    * @example
    * ```ts

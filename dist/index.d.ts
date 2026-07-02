@@ -7,7 +7,7 @@ export { EntityRef } from './entity.js';
 export type { EntityWriteOptions, EntityRefInfo } from './entity.js';
 export { FMSODataError, FMScriptError, isFMSODataError, isFMScriptError } from './errors.js';
 export type { ODataErrorBody } from './errors.js';
-export { basicAuth, fmidAuth } from './http.js';
+export { basicAuth, bearerAuth } from './http.js';
 export type { FMAuthScheme, FMAuthToken, FMAuthTokenProvider } from './http.js';
 export { MetadataFetcher } from './metadata.js';
 export type { EdmAction, EdmEntitySet, EdmEntityType, EdmProperty, MetadataOptions, ODataMetadata, } from './metadata.js';

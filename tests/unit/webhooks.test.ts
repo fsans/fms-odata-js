@@ -27,11 +27,13 @@ function makeClient(
 }
 
 describe('WebhookManager#create', () => {
-  it('POSTs to Webhook.Add with the webhook params as JSON body', async () => {
-    const fetchMock = vi.fn().mockResolvedValue(jsonResponse({ id: 'wh1' }))
+  it('POSTs to Webhook.Add with the webhook params as JSON body and returns { id }', async () => {
+    const fetchMock = vi.fn().mockResolvedValue(
+      jsonResponse({ webhookResult: { webhookID: 42 } }),
+    )
     const db = makeClient(fetchMock)
 
-    await db.webhooks().create({
+    const result = await db.webhooks().create({
       webhook: 'https://my.example.com:8080/wh',
       tableName: 'contact',
       select: 'id,first_name',
@@ -50,6 +52,22 @@ describe('WebhookManager#create', () => {
     expect(body.notifySchemaChanges).toBe(true)
     const headers = (init as RequestInit).headers as Headers
     expect(headers.get('content-type')).toBe('application/json')
+    expect(result).toEqual({ id: '42' })
+  })
+
+  it('accepts alternate response shapes (webhookID at top level)', async () => {
+    const fetchMock = vi.fn().mockResolvedValue(jsonResponse({ webhookID: 7 }))
+    const db = makeClient(fetchMock)
+    const result = await db.webhooks().create({ webhook: 'https://x', tableName: 't' })
+    expect(result).toEqual({ id: '7' })
+  })
+
+  it('throws when the response lacks a webhook id', async () => {
+    const fetchMock = vi.fn().mockResolvedValue(jsonResponse({}))
+    const db = makeClient(fetchMock)
+    await expect(
+      db.webhooks().create({ webhook: 'https://x', tableName: 't' }),
+    ).rejects.toThrow(/webhook id/)
   })
 
   it('rejects empty webhook URL', async () => {
@@ -71,7 +89,9 @@ describe('WebhookManager#create', () => {
   })
 
   it('maps legacy headers alias to endpointHeaders', async () => {
-    const fetchMock = vi.fn().mockResolvedValue(jsonResponse({ id: 'wh1' }))
+    const fetchMock = vi.fn().mockResolvedValue(
+      jsonResponse({ webhookResult: { webhookID: 1 } }),
+    )
     const db = makeClient(fetchMock)
 
     await db.webhooks().create({
@@ -87,7 +107,9 @@ describe('WebhookManager#create', () => {
   })
 
   it('prefers endpointHeaders over legacy headers when both are set', async () => {
-    const fetchMock = vi.fn().mockResolvedValue(jsonResponse({ id: 'wh1' }))
+    const fetchMock = vi.fn().mockResolvedValue(
+      jsonResponse({ webhookResult: { webhookID: 1 } }),
+    )
     const db = makeClient(fetchMock)
 
     await db.webhooks().create({
@@ -102,7 +124,9 @@ describe('WebhookManager#create', () => {
   })
 
   it('works via db.createWebhook convenience method', async () => {
-    const fetchMock = vi.fn().mockResolvedValue(jsonResponse({ id: 'wh1' }))
+    const fetchMock = vi.fn().mockResolvedValue(
+      jsonResponse({ webhookResult: { webhookID: 1 } }),
+    )
     const db = makeClient(fetchMock)
     await db.createWebhook({ webhook: 'https://x', tableName: 't' })
     expect(fetchMock).toHaveBeenCalled()
@@ -110,17 +134,27 @@ describe('WebhookManager#create', () => {
 })
 
 describe('WebhookManager#remove', () => {
-  it('POSTs { id } to Webhook.Remove', async () => {
+  it('POSTs to Webhook.Delete(<id>) with no body', async () => {
     const fetchMock = vi.fn().mockResolvedValue(jsonResponse({}))
     const db = makeClient(fetchMock)
 
-    await db.webhooks().remove('wh1')
+    await db.webhooks().remove('1')
 
     const [url, init] = fetchMock.mock.calls[0]!
-    expect(url).toBe(`${BASE}/Webhook.Remove`)
+    expect(url).toBe(`${BASE}/Webhook.Delete(1)`)
     expect((init as RequestInit).method).toBe('POST')
-    const body = JSON.parse((init as RequestInit).body as string)
-    expect(body).toEqual({ id: 'wh1' })
+    // No body for delete — the id is in the URL path.
+    expect((init as RequestInit).body).toBeUndefined()
+  })
+
+  it('accepts numeric ids', async () => {
+    const fetchMock = vi.fn().mockResolvedValue(jsonResponse({}))
+    const db = makeClient(fetchMock)
+
+    await db.webhooks().remove(42)
+
+    const [url] = fetchMock.mock.calls[0]!
+    expect(url).toBe(`${BASE}/Webhook.Delete(42)`)
   })
 
   it('rejects empty id', async () => {
@@ -129,22 +163,32 @@ describe('WebhookManager#remove', () => {
     await expect(db.webhooks().remove('')).rejects.toThrow(/id/)
     expect(fetchMock).not.toHaveBeenCalled()
   })
+
+  it('delete() is an alias for remove()', async () => {
+    const fetchMock = vi.fn().mockResolvedValue(jsonResponse({}))
+    const db = makeClient(fetchMock)
+
+    await db.webhooks().delete('5')
+
+    const [url] = fetchMock.mock.calls[0]!
+    expect(url).toBe(`${BASE}/Webhook.Delete(5)`)
+  })
 })
 
 describe('WebhookManager#get', () => {
-  it('POSTs { id } to Webhook.Get', async () => {
+  it('GETs Webhook.Get(<id>) with no body', async () => {
     const fetchMock = vi.fn().mockResolvedValue(
-      jsonResponse({ id: 'wh1', webhook: 'https://x', tableName: 't' }),
+      jsonResponse({ webhook: { webhookID: 1, webhook: 'https://x', tableName: 't' } }),
     )
     const db = makeClient(fetchMock)
 
-    const result = await db.webhooks().get('wh1')
+    const result = await db.webhooks().get('1')
 
     const [url, init] = fetchMock.mock.calls[0]!
-    expect(url).toBe(`${BASE}/Webhook.Get`)
-    const body = JSON.parse((init as RequestInit).body as string)
-    expect(body).toEqual({ id: 'wh1' })
-    expect(result).toEqual({ id: 'wh1', webhook: 'https://x', tableName: 't' })
+    expect(url).toBe(`${BASE}/Webhook.Get(1)`)
+    expect((init as RequestInit).method).toBe('GET')
+    expect((init as RequestInit).body).toBeUndefined()
+    expect(result).toBeTruthy()
   })
 
   it('rejects empty id', async () => {
@@ -156,31 +200,45 @@ describe('WebhookManager#get', () => {
 })
 
 describe('WebhookManager#getAll', () => {
-  it('POSTs to Webhook.GetAll with no body', async () => {
-    const fetchMock = vi.fn().mockResolvedValue(jsonResponse([{ id: 'wh1' }]))
+  it('GETs Webhook.GetAll with no body', async () => {
+    const fetchMock = vi.fn().mockResolvedValue(
+      jsonResponse({ webhooks: [{ webhookID: 1 }] }),
+    )
     const db = makeClient(fetchMock)
 
     await db.webhooks().getAll()
 
     const [url, init] = fetchMock.mock.calls[0]!
     expect(url).toBe(`${BASE}/Webhook.GetAll`)
-    expect((init as RequestInit).method).toBe('POST')
-    const headers = (init as RequestInit).headers as Headers
-    expect(headers.get('content-type')).toBe('application/json')
+    expect((init as RequestInit).method).toBe('GET')
+    expect((init as RequestInit).body).toBeUndefined()
   })
 })
 
 describe('WebhookManager#invoke', () => {
-  it('POSTs { id } to Webhook.Invoke', async () => {
+  it('POSTs to Webhook.Invoke(<id>) with { rowIDs: [] } by default', async () => {
     const fetchMock = vi.fn().mockResolvedValue(jsonResponse({}))
     const db = makeClient(fetchMock)
 
-    await db.webhooks().invoke('wh1')
+    await db.webhooks().invoke('1')
 
     const [url, init] = fetchMock.mock.calls[0]!
-    expect(url).toBe(`${BASE}/Webhook.Invoke`)
+    expect(url).toBe(`${BASE}/Webhook.Invoke(1)`)
+    expect((init as RequestInit).method).toBe('POST')
     const body = JSON.parse((init as RequestInit).body as string)
-    expect(body).toEqual({ id: 'wh1' })
+    expect(body).toEqual({ rowIDs: [] })
+  })
+
+  it('includes rowIDs in the body when provided', async () => {
+    const fetchMock = vi.fn().mockResolvedValue(jsonResponse({}))
+    const db = makeClient(fetchMock)
+
+    await db.webhooks().invoke('1', { rowIDs: [10, 20] })
+
+    const [url, init] = fetchMock.mock.calls[0]!
+    expect(url).toBe(`${BASE}/Webhook.Invoke(1)`)
+    const body = JSON.parse((init as RequestInit).body as string)
+    expect(body).toEqual({ rowIDs: [10, 20] })
   })
 
   it('rejects empty id', async () => {

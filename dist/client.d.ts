@@ -85,7 +85,7 @@ export declare class FMSOData {
      * `@fms-odata/spec-ts` `parseServerVersion`). The result is cached for the
      * lifetime of this `FMSOData` instance.
      *
-     * Returns the major version string (`'19'`, `'21'`, `'22'`, `'26'`) or
+     * Returns the major version string (`'20'`, `'21'`, `'22'`, `'26'`) or
      * `'future'` if the version is newer than the spec knows about. Returns
      * `null` if the version cannot be determined (e.g. the metadata lacks the
      * annotation).
@@ -162,7 +162,7 @@ export declare class FMSOData {
     /** @internal */ private _webhookManager?;
     /**
      * Get a `WebhookManager` handle for webhook CRUD operations (create, remove,
-     * get, getAll, invoke). Requires FileMaker Server 2023+ (v21).
+     * get, getAll, invoke). Requires FileMaker Server 2025+ (v22).
      *
      * ```ts
      * await db.webhooks().create({ webhook: 'https://...', tableName: 'contact' })
@@ -171,14 +171,14 @@ export declare class FMSOData {
     webhooks(): WebhookManager;
     /** Convenience: create a webhook. See {@link WebhookManager#create}. */
     createWebhook(params: import('@fms-odata/spec-ts').WebhookCreateParams, opts?: WebhookOptions): Promise<unknown>;
-    /** Convenience: remove a webhook by ID. See {@link WebhookManager#remove}. */
-    removeWebhook(id: string, opts?: WebhookOptions): Promise<unknown>;
+    /** Convenience: delete a webhook by ID. See {@link WebhookManager#remove}. */
+    removeWebhook(id: string | number, opts?: WebhookOptions): Promise<unknown>;
     /** Convenience: get a webhook by ID. See {@link WebhookManager#get}. */
-    getWebhook(id: string, opts?: WebhookOptions): Promise<unknown>;
+    getWebhook(id: string | number, opts?: WebhookOptions): Promise<unknown>;
     /** Convenience: list all webhooks. See {@link WebhookManager#getAll}. */
     getAllWebhooks(opts?: WebhookOptions): Promise<unknown>;
     /** Convenience: manually invoke a webhook by ID. See {@link WebhookManager#invoke}. */
-    invokeWebhook(id: string, opts?: WebhookOptions): Promise<unknown>;
+    invokeWebhook(id: string | number, opts?: WebhookOptions): Promise<unknown>;
     /**
      * Create a new `$batch` builder for composing multiple OData operations
      * into a single HTTP round-trip.

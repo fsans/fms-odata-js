@@ -118,7 +118,7 @@ export class SchemaEditor {
     if (!params.fields?.length) throw new TypeError('SchemaEditor: `fields` must be a non-empty array')
     validateFieldDefinitions(params.fields)
 
-    const url = `${this._client.baseUrl}/FileMaker_Tables('${encodePathSegment(params.tableName)}')`
+    const url = `${this._client.baseUrl}/FileMaker_Tables/${encodePathSegment(params.tableName)}`
     return executeJson<unknown>(this._client._ctx, url, {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
@@ -148,7 +148,7 @@ export class SchemaEditor {
           'this operation permanently destroys the table and all its records.',
       )
     }
-    const url = `${this._client.baseUrl}/FileMaker_Tables('${encodePathSegment(tableName)}')`
+    const url = `${this._client.baseUrl}/FileMaker_Tables/${encodePathSegment(tableName)}`
     await executeJson<void>(this._client._ctx, url, {
       method: 'DELETE',
       accept: 'json',
@@ -178,7 +178,7 @@ export class SchemaEditor {
           'this operation permanently destroys the field and all its data.',
       )
     }
-    const url = `${this._client.baseUrl}/FileMaker_Tables('${encodePathSegment(tableName)}')/${encodePathSegment(fieldName)}`
+    const url = `${this._client.baseUrl}/FileMaker_Tables/${encodePathSegment(tableName)}/${encodePathSegment(fieldName)}`
     await executeJson<void>(this._client._ctx, url, {
       method: 'DELETE',
       accept: 'json',

@@ -62,7 +62,7 @@ function isFMScriptError(err) {
 }
 
 // src/http.ts
-var AUTH_SCHEME_RE = /^(basic|bearer|fmid|negotiate|digest)\s+\S/i;
+var AUTH_SCHEME_RE = /^(basic|bearer|negotiate|digest)\s+\S/i;
 async function resolveAuthHeader(provider) {
   const raw = typeof provider === "function" ? await provider() : provider;
   if (typeof raw !== "string" || raw.length === 0) {
@@ -75,8 +75,8 @@ function basicAuth(user, password) {
   const b64 = typeof Buffer !== "undefined" ? Buffer.from(raw, "utf8").toString("base64") : btoa(unescape(encodeURIComponent(raw)));
   return `Basic ${b64}`;
 }
-function fmidAuth(token) {
-  return `FMID ${token}`;
+function bearerAuth(token) {
+  return `Bearer ${token}`;
 }
 function combineSignals(signals) {
   const filtered = signals.filter((s) => s !== void 0);
@@ -515,20 +515,21 @@ var Batch = class {
 
 // node_modules/@fms-odata/spec-ts/dist/versions.js
 var FM_VERSION_NAMES = {
-  "19": "FileMaker 19.x",
-  "21": "Claris FileMaker 2023",
-  "22": "Claris FileMaker 2024",
+  "20": "Claris FileMaker 2023",
+  "21": "Claris FileMaker 2024",
+  "22": "Claris FileMaker 2025",
   "26": "Claris FileMaker 2026",
   future: "Future / next"
 };
-var ODATA_PROTOCOL_VERSION = "4.0";
+var ODATA_PROTOCOL_VERSION = "4.01";
 var FM_VERSION_MATRIX = {
-  "19": {
-    major: "19",
-    name: "FileMaker 19.x",
-    releaseYear: null,
-    internalVersion: "19.x",
-    status: "baseline",
+  "20": {
+    major: "20",
+    name: "Claris FileMaker 2023",
+    releaseYear: 2023,
+    internalVersion: "20.x",
+    status: "supported",
+    odataProtocolVersion: "4.0",
     features: {
       serviceDocument: true,
       metadata: true,
@@ -550,12 +551,17 @@ var FM_VERSION_MATRIX = {
       applyAggregation: false,
       typeCasting: false,
       parameterizedFilters: false,
+      simplifiedQuerySyntax: false,
+      nestedQueries: false,
+      batchPreferenceInheritance: false,
+      metadataFiltering: false,
       immutableIdUrls: false,
+      fmComment: false,
       aiAnnotation: false,
+      computedAnnotation: false,
       serverVersionAnnotation: false,
       enrichedFMComment: false,
       authBasic: true,
-      authFMID: false,
       authOAuth: false
     },
     queryOptions: {
@@ -573,10 +579,11 @@ var FM_VERSION_MATRIX = {
   },
   "21": {
     major: "21",
-    name: "Claris FileMaker 2023",
-    releaseYear: 2023,
+    name: "Claris FileMaker 2024",
+    releaseYear: 2024,
     internalVersion: "21.x",
     status: "supported",
+    odataProtocolVersion: "4.01",
     features: {
       serviceDocument: true,
       metadata: true,
@@ -587,23 +594,28 @@ var FM_VERSION_MATRIX = {
       crossJoin: true,
       batch: true,
       scripts: true,
-      scriptsByFMSID: false,
+      scriptsByFMSID: true,
       scriptListing: false,
       containerBinaryUpload: true,
       containerBase64Upload: true,
       containerDownload: true,
       schemaModification: true,
-      webhooks: true,
+      webhooks: false,
       webhookQueryHeaders: false,
       applyAggregation: false,
       typeCasting: true,
       parameterizedFilters: true,
+      simplifiedQuerySyntax: true,
+      nestedQueries: true,
+      batchPreferenceInheritance: true,
+      metadataFiltering: false,
       immutableIdUrls: false,
-      aiAnnotation: false,
+      fmComment: true,
+      aiAnnotation: true,
+      computedAnnotation: false,
       serverVersionAnnotation: false,
       enrichedFMComment: false,
       authBasic: true,
-      authFMID: true,
       authOAuth: true
     },
     queryOptions: {
@@ -621,10 +633,11 @@ var FM_VERSION_MATRIX = {
   },
   "22": {
     major: "22",
-    name: "Claris FileMaker 2024",
-    releaseYear: 2024,
+    name: "Claris FileMaker 2025",
+    releaseYear: 2025,
     internalVersion: "22.x",
     status: "supported",
+    odataProtocolVersion: "4.01",
     features: {
       serviceDocument: true,
       metadata: true,
@@ -635,7 +648,7 @@ var FM_VERSION_MATRIX = {
       crossJoin: true,
       batch: true,
       scripts: true,
-      scriptsByFMSID: false,
+      scriptsByFMSID: true,
       scriptListing: false,
       containerBinaryUpload: true,
       containerBase64Upload: true,
@@ -646,12 +659,17 @@ var FM_VERSION_MATRIX = {
       applyAggregation: true,
       typeCasting: true,
       parameterizedFilters: true,
+      simplifiedQuerySyntax: true,
+      nestedQueries: true,
+      batchPreferenceInheritance: true,
+      metadataFiltering: true,
       immutableIdUrls: false,
-      aiAnnotation: false,
+      fmComment: true,
+      aiAnnotation: true,
+      computedAnnotation: false,
       serverVersionAnnotation: false,
       enrichedFMComment: false,
       authBasic: true,
-      authFMID: true,
       authOAuth: true
     },
     queryOptions: {
@@ -673,6 +691,7 @@ var FM_VERSION_MATRIX = {
     releaseYear: 2026,
     internalVersion: "26.x",
     status: "current",
+    odataProtocolVersion: "4.01",
     features: {
       serviceDocument: true,
       metadata: true,
@@ -694,12 +713,17 @@ var FM_VERSION_MATRIX = {
       applyAggregation: true,
       typeCasting: true,
       parameterizedFilters: true,
+      simplifiedQuerySyntax: true,
+      nestedQueries: true,
+      batchPreferenceInheritance: true,
+      metadataFiltering: true,
       immutableIdUrls: true,
+      fmComment: true,
       aiAnnotation: true,
+      computedAnnotation: true,
       serverVersionAnnotation: true,
       enrichedFMComment: true,
       authBasic: true,
-      authFMID: true,
       authOAuth: true
     },
     queryOptions: {
@@ -721,6 +745,7 @@ var FM_VERSION_MATRIX = {
     releaseYear: null,
     internalVersion: "unknown",
     status: "future",
+    odataProtocolVersion: "4.01",
     features: {
       serviceDocument: true,
       metadata: true,
@@ -742,12 +767,17 @@ var FM_VERSION_MATRIX = {
       applyAggregation: true,
       typeCasting: true,
       parameterizedFilters: true,
+      simplifiedQuerySyntax: true,
+      nestedQueries: true,
+      batchPreferenceInheritance: true,
+      metadataFiltering: true,
       immutableIdUrls: true,
+      fmComment: true,
       aiAnnotation: true,
+      computedAnnotation: true,
       serverVersionAnnotation: true,
       enrichedFMComment: true,
       authBasic: true,
-      authFMID: true,
       authOAuth: true
     },
     queryOptions: {
@@ -771,7 +801,7 @@ function hasQueryOption(version, option) {
   return FM_VERSION_MATRIX[version]?.queryOptions[option] ?? false;
 }
 function minVersionForFeature(feature) {
-  const order = ["19", "21", "22", "26"];
+  const order = ["20", "21", "22", "26"];
   for (const v of order) {
     if (FM_VERSION_MATRIX[v].features[feature])
       return v;
@@ -1796,13 +1826,13 @@ var Query = class _Query {
     return this;
   }
   // -------------------------------------------------------------------------
-  // $apply (aggregation) — requires FMS 22.0.1+ (FileMaker 2024)
+  // $apply (aggregation) — requires FMS 22.0.1+ (FileMaker 2025)
   // -------------------------------------------------------------------------
   /**
    * Set a raw `$apply` expression. Use this for advanced transformations
    * that the `aggregate()` / `groupBy()` helpers don't cover.
    *
-   * Requires FileMaker Server 2024+ (v22). Use `db.hasFeature('applyAggregation')`
+   * Requires FileMaker Server 2025+ (v22). Use `db.hasFeature('applyAggregation')`
    * to check before calling.
    *
    * @example
@@ -1818,7 +1848,7 @@ var Query = class _Query {
   /**
    * Aggregate the entity set. Produces a `$apply=aggregate(...)` expression.
    *
-   * Requires FileMaker Server 2024+ (v22).
+   * Requires FileMaker Server 2025+ (v22).
    *
    * @example
    * ```ts
@@ -1837,7 +1867,7 @@ var Query = class _Query {
    * Group the entity set by one or more fields, optionally with aggregation.
    * Produces a `$apply=groupby((fields), aggregate(...))` expression.
    *
-   * Requires FileMaker Server 2024+ (v22).
+   * Requires FileMaker Server 2025+ (v22).
    *
    * @example
    * ```ts
@@ -2046,7 +2076,7 @@ var SchemaEditor = class {
     if (!params.tableName) throw new TypeError("SchemaEditor: `tableName` is required");
     if (!params.fields?.length) throw new TypeError("SchemaEditor: `fields` must be a non-empty array");
     validateFieldDefinitions(params.fields);
-    const url = `${this._client.baseUrl}/FileMaker_Tables('${encodePathSegment(params.tableName)}')`;
+    const url = `${this._client.baseUrl}/FileMaker_Tables/${encodePathSegment(params.tableName)}`;
     return executeJson(this._client._ctx, url, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
@@ -2071,7 +2101,7 @@ var SchemaEditor = class {
         `SchemaEditor: deleteTable("${tableName}") requires { confirm: true } \u2014 this operation permanently destroys the table and all its records.`
       );
     }
-    const url = `${this._client.baseUrl}/FileMaker_Tables('${encodePathSegment(tableName)}')`;
+    const url = `${this._client.baseUrl}/FileMaker_Tables/${encodePathSegment(tableName)}`;
     await executeJson(this._client._ctx, url, {
       method: "DELETE",
       accept: "json",
@@ -2095,7 +2125,7 @@ var SchemaEditor = class {
         `SchemaEditor: deleteField("${tableName}", "${fieldName}") requires { confirm: true } \u2014 this operation permanently destroys the field and all its data.`
       );
     }
-    const url = `${this._client.baseUrl}/FileMaker_Tables('${encodePathSegment(tableName)}')/${encodePathSegment(fieldName)}`;
+    const url = `${this._client.baseUrl}/FileMaker_Tables/${encodePathSegment(tableName)}/${encodePathSegment(fieldName)}`;
     await executeJson(this._client._ctx, url, {
       method: "DELETE",
       accept: "json",
@@ -2155,19 +2185,27 @@ function normalizeCreateParams(params) {
   if (params.maxFailedAttempts !== void 0) out.maxFailedAttempts = params.maxFailedAttempts;
   return out;
 }
+function extractWebhookId(data) {
+  if (!data || typeof data !== "object") return void 0;
+  const obj = data;
+  const fromResult = obj.webhookResult;
+  const id = fromResult?.webhookID ?? obj.webhookID ?? obj.id;
+  return id !== void 0 ? String(id) : void 0;
+}
 var WebhookManager = class {
   constructor(client) {
     this._client = client;
   }
   /** Build the URL for a webhook operation. */
-  _url(operation) {
-    return `${this._client.baseUrl}/Webhook.${operation}`;
+  _url(operation, id) {
+    const base = `${this._client.baseUrl}/Webhook.${operation}`;
+    return id !== void 0 ? `${base}(${encodePathSegment(String(id))})` : base;
   }
   /**
    * Create a webhook.
    *
    * ```ts
-   * await db.webhooks().create({
+   * const { id } = await db.webhooks().create({
    *   webhook: 'https://my.example.com:8080/webhook',
    *   tableName: 'contact',
    *   select: 'id,first_name',
@@ -2175,49 +2213,56 @@ var WebhookManager = class {
    *   notifySchemaChanges: true,
    * })
    * ```
+   *
+   * @returns An object with the server-generated `id` of the new webhook.
    */
   async create(params, opts = {}) {
     if (!params.webhook) throw new TypeError("WebhookManager: `webhook` URL is required");
     if (!params.tableName) throw new TypeError("WebhookManager: `tableName` is required");
     const body = JSON.stringify(normalizeCreateParams(params));
-    return executeJson(this._client._ctx, this._url("Add"), {
+    const data = await executeJson(this._client._ctx, this._url("Add"), {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body,
       accept: "json",
       ...opts.signal ? { signal: opts.signal } : {}
     });
+    const id = extractWebhookId(data);
+    if (id === void 0) {
+      throw new Error("WebhookManager: Webhook.Add did not return a webhook id");
+    }
+    return { id };
   }
   /**
-   * Remove (delete) a webhook by its ID.
+   * Delete a webhook by its ID.
    *
    * ```ts
-   * await db.webhooks().remove('abc123')
+   * await db.webhooks().remove('1')
    * ```
    */
   async remove(id, opts = {}) {
-    if (!id) throw new TypeError("WebhookManager: webhook `id` is required");
-    return executeJson(this._client._ctx, this._url("Remove"), {
+    if (id === "" || id === void 0) throw new TypeError("WebhookManager: webhook `id` is required");
+    return executeJson(this._client._ctx, this._url("Delete", id), {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ id }),
       accept: "json",
       ...opts.signal ? { signal: opts.signal } : {}
     });
+  }
+  /** Alias for {@link remove} (matches the FMS endpoint name `Webhook.Delete`). */
+  async delete(id, opts = {}) {
+    return this.remove(id, opts);
   }
   /**
    * Get a specific webhook's data by ID.
    *
    * ```ts
-   * const data = await db.webhooks().get('abc123')
+   * const data = await db.webhooks().get('1')
    * ```
    */
   async get(id, opts = {}) {
-    if (!id) throw new TypeError("WebhookManager: webhook `id` is required");
-    return executeJson(this._client._ctx, this._url("Get"), {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ id }),
+    if (id === "" || id === void 0) throw new TypeError("WebhookManager: webhook `id` is required");
+    return executeJson(this._client._ctx, this._url("Get", id), {
+      method: "GET",
       accept: "json",
       ...opts.signal ? { signal: opts.signal } : {}
     });
@@ -2231,8 +2276,7 @@ var WebhookManager = class {
    */
   async getAll(opts = {}) {
     return executeJson(this._client._ctx, this._url("GetAll"), {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
+      method: "GET",
       accept: "json",
       ...opts.signal ? { signal: opts.signal } : {}
     });
@@ -2240,18 +2284,25 @@ var WebhookManager = class {
   /**
    * Manually invoke (trigger) a webhook by ID. Useful for testing.
    *
+   * Optionally pass `rowIDs` to target specific records; if omitted, FMS
+   * triggers the webhook for all pending records.
+   *
    * ```ts
-   * await db.webhooks().invoke('abc123')
+   * await db.webhooks().invoke('1')
+   * await db.webhooks().invoke('1', { rowIDs: [10, 20] })
    * ```
    */
   async invoke(id, opts = {}) {
-    if (!id) throw new TypeError("WebhookManager: webhook `id` is required");
-    return executeJson(this._client._ctx, this._url("Invoke"), {
+    if (id === "" || id === void 0) throw new TypeError("WebhookManager: webhook `id` is required");
+    const { rowIDs, signal, ...rest } = opts;
+    const body = JSON.stringify({ rowIDs: rowIDs ? [...rowIDs] : [] });
+    return executeJson(this._client._ctx, this._url("Invoke", id), {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ id }),
+      body,
       accept: "json",
-      ...opts.signal ? { signal: opts.signal } : {}
+      ...signal ? { signal } : {},
+      ...rest
     });
   }
 };
@@ -2359,7 +2410,7 @@ var FMSOData = class {
    * `@fms-odata/spec-ts` `parseServerVersion`). The result is cached for the
    * lifetime of this `FMSOData` instance.
    *
-   * Returns the major version string (`'19'`, `'21'`, `'22'`, `'26'`) or
+   * Returns the major version string (`'20'`, `'21'`, `'22'`, `'26'`) or
    * `'future'` if the version is newer than the spec knows about. Returns
    * `null` if the version cannot be determined (e.g. the metadata lacks the
    * annotation).
@@ -2482,7 +2533,7 @@ var FMSOData = class {
   }
   /**
    * Get a `WebhookManager` handle for webhook CRUD operations (create, remove,
-   * get, getAll, invoke). Requires FileMaker Server 2023+ (v21).
+   * get, getAll, invoke). Requires FileMaker Server 2025+ (v22).
    *
    * ```ts
    * await db.webhooks().create({ webhook: 'https://...', tableName: 'contact' })
@@ -2496,7 +2547,7 @@ var FMSOData = class {
   async createWebhook(params, opts = {}) {
     return this.webhooks().create(params, opts);
   }
-  /** Convenience: remove a webhook by ID. See {@link WebhookManager#remove}. */
+  /** Convenience: delete a webhook by ID. See {@link WebhookManager#remove}. */
   async removeWebhook(id, opts = {}) {
     return this.webhooks().remove(id, opts);
   }
@@ -2563,9 +2614,9 @@ export {
   ScriptInvoker,
   WebhookManager,
   basicAuth,
+  bearerAuth,
   buildContainerJsonBody,
   filterFactory,
-  fmidAuth,
   hasFeature,
   hasQueryOption,
   isFMSODataError as isFMODataError,
