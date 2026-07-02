@@ -99,7 +99,7 @@ describe('SchemaEditor#createTable', () => {
 })
 
 describe('SchemaEditor#addFields', () => {
-  it('PATCHes FileMaker_Tables(\'{table}\') with { fields } body', async () => {
+  it('PATCHes FileMaker_Tables/{table} with { fields } body', async () => {
     const fetchMock = vi.fn().mockResolvedValue(jsonResponse({}))
     const db = makeClient(fetchMock)
 
@@ -109,7 +109,7 @@ describe('SchemaEditor#addFields', () => {
     })
 
     const [url, init] = fetchMock.mock.calls[0]!
-    expect(url).toBe(`${BASE}/FileMaker_Tables('Company')`)
+    expect(url).toBe(`${BASE}/FileMaker_Tables/Company`)
     expect((init as RequestInit).method).toBe('PATCH')
     const body = JSON.parse((init as RequestInit).body as string)
     expect(body).toEqual({ fields: [{ name: 'Phone', type: 'varchar(30)' }] })
@@ -125,19 +125,19 @@ describe('SchemaEditor#addFields', () => {
     })
 
     const [url] = fetchMock.mock.calls[0]!
-    expect(url).toBe(`${BASE}/FileMaker_Tables('My%20Table')`)
+    expect(url).toBe(`${BASE}/FileMaker_Tables/My%20Table`)
   })
 })
 
 describe('SchemaEditor#deleteTable', () => {
-  it('DELETEs FileMaker_Tables(\'{table}\') when confirm is true', async () => {
+  it('DELETEs FileMaker_Tables/{table} when confirm is true', async () => {
     const fetchMock = vi.fn().mockResolvedValue(new Response(null, { status: 204 }))
     const db = makeClient(fetchMock)
 
     await db.schema().deleteTable('OldTable', { confirm: true })
 
     const [url, init] = fetchMock.mock.calls[0]!
-    expect(url).toBe(`${BASE}/FileMaker_Tables('OldTable')`)
+    expect(url).toBe(`${BASE}/FileMaker_Tables/OldTable`)
     expect((init as RequestInit).method).toBe('DELETE')
   })
 
@@ -163,14 +163,14 @@ describe('SchemaEditor#deleteTable', () => {
 })
 
 describe('SchemaEditor#deleteField', () => {
-  it('DELETEs FileMaker_Tables(\'{table}\')/{field} when confirm is true', async () => {
+  it('DELETEs FileMaker_Tables/{table}/{field} when confirm is true', async () => {
     const fetchMock = vi.fn().mockResolvedValue(new Response(null, { status: 204 }))
     const db = makeClient(fetchMock)
 
     await db.schema().deleteField('Company', 'OldField', { confirm: true })
 
     const [url, init] = fetchMock.mock.calls[0]!
-    expect(url).toBe(`${BASE}/FileMaker_Tables('Company')/OldField`)
+    expect(url).toBe(`${BASE}/FileMaker_Tables/Company/OldField`)
     expect((init as RequestInit).method).toBe('DELETE')
   })
 
@@ -191,7 +191,7 @@ describe('SchemaEditor#deleteField', () => {
     await db.schema().deleteField('My Table', 'Field/Name', { confirm: true })
 
     const [url] = fetchMock.mock.calls[0]!
-    expect(url).toBe(`${BASE}/FileMaker_Tables('My%20Table')/Field%2FName`)
+    expect(url).toBe(`${BASE}/FileMaker_Tables/My%20Table/Field%2FName`)
   })
 })
 

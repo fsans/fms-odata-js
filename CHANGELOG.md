@@ -5,7 +5,65 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [0.4.0] — 2025-01-09
+
+### Fixed — DDL and webhook API alignment with real FileMaker Server
+
+Verified against a live FileMaker Server 26.0.1 instance and the official
+Claris OData guide. The previous implementations used URL formats that FMS
+rejects; both modules now match the actual server behavior.
+
+- **DDL URL format (`schema.ts`):** `addFields`, `deleteTable`, and
+  `deleteField` now use the slash-separated URL format
+  (`FileMaker_Tables/{table}`) that FMS accepts, instead of the OData
+  key-parentheses format (`FileMaker_Tables('{table}')`) which FMS rejects
+  with error `-1010` ("entity name must be specified"). The spec docs
+  documented the parentheses format, but the live server only accepts the
+  slash format for these operations.
+- **Webhook endpoints (`webhooks.ts`):** rewritten to match the official
+  Claris OData webhook API:
+  - `getAll()` now uses `GET /Webhook.GetAll` (was `POST`).
+  - `get(id)` now uses `GET /Webhook.Get({id})` with the id in the URL path
+    (was `POST /Webhook.Get` with `{ id }` body).
+  - `remove(id)` now uses `POST /Webhook.Delete({id})` with the id in the
+    URL path (was `POST /Webhook.Remove` with `{ id }` body). A `delete()`
+    alias is provided to match the FMS endpoint name.
+  - `invoke(id)` now uses `POST /Webhook.Invoke({id})` with the id in the
+    URL path and a required JSON body `{ rowIDs: [...] }` (was `POST
+    /Webhook.Invoke` with `{ id }` body). FMS rejects empty bodies.
+  - `create()` now returns `{ id: string }` extracted from the FMS response
+    `{ webhookResult: { webhookID: N } }` (previously returned the raw
+    response and callers had to guess the id field name).
+  - All id parameters now accept `string | number` (FMS issues integer IDs).
+- **Integration tests:** added `tests/integration/ddl-webhooks.test.ts`
+  covering DDL (create/addFields/index/deleteField/deleteTable) and webhook
+  management (create/get/getAll/invoke/remove) against a live FMS. Throwaway
+  tables and webhooks are created and cleaned up; production tables are
+  never touched.
+
+### Changed — Spec alignment with `@fms-odata/spec-ts` 2.0.0
+
+Bumped the shared spec dependency from `^1.1.0` to `^2.0.1` and aligned the
+client with the v2.0.0 spec overhaul (drop FileMaker 19.x, corrected version
+history, OAuth/Bearer auth).
+
+- **Dependency:** `@fms-odata/spec-ts` `^1.1.0` → `^2.0.1`.
+- **Auth:** replaced the deprecated `fmidAuth()` helper (which produced the
+  now-removed `FMID …` scheme) with `bearerAuth()` producing `Bearer …`
+  headers, matching the spec's `FMOAuthAuthConfig` / `bearerAuth()`. The
+  `FMID` scheme is no longer recognized by `resolveAuthHeader`.
+- **Version baseline:** FileMaker 19.x is no longer in the spec. The minimum
+  recognized major version is now `'20'` (Claris FileMaker 2023). Version
+  detection of a `19.x` server now resolves to `'future'` instead of `'19'`.
+- **Version names:** corrected year mapping — `'21'` → FileMaker 2024,
+  `'22'` → FileMaker 2025 (previously 2023 / 2024 respectively).
+- **Webhooks:** the spec now attributes webhooks to v22 (FileMaker 2025)
+  rather than v21. Updated doc comments accordingly; runtime feature gating
+  is driven by the spec matrix so behavior follows automatically.
+- **`$apply` aggregation:** doc comments updated to FileMaker 2025+ (v22).
+- **Tests:** updated version-detection tests to the new baseline (`'20'`)
+  and corrected year-name labels. Fixed pre-existing `possibly 'undefined'`
+  type errors in batch/metadata/integration tests so `tsc --noEmit` is clean.
 
 ### Added — Schema editing (DDL)
 
@@ -21,7 +79,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Convenience methods on `FMSOData`**: `db.webhooks()`, `db.createWebhook()`, `db.removeWebhook()`, `db.getWebhook()`, `db.getAllWebhooks()`, `db.invokeWebhook()`.
 - **Legacy `headers` alias**: the `headers` field in `WebhookCreateParams` is automatically mapped to `endpointHeaders` for backward compatibility.
 - **Spec type re-exports**: `WebhookCreateParams`, `WebhookData`, `WebhookOperation` re-exported from the public API.
-- Requires FileMaker Server 2023+ (v21). Use `db.hasFeature('webhooks')` to check.
+- Requires FileMaker Server 2025+ (v22). Use `db.hasFeature('webhooks')` to check.
 
 ## [0.3.0] - 2026-06-23
 

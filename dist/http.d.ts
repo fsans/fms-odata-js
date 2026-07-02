@@ -8,7 +8,7 @@
  * timeout composition, browser/Web Viewer compatibility).
  *
  * Responsibilities:
- * - Authorization header resolution (Basic, Bearer, or FMID, auto-detected).
+ * - Authorization header resolution (Basic or Bearer/OAuth, auto-detected).
  * - Timeout + AbortSignal composition.
  * - 401 retry via `onUnauthorized` (once).
  * - Error envelope normalization into `FMSODataError`.
@@ -20,8 +20,8 @@ import type { TokenProvider, RequestOptions } from './types.js';
 export declare function resolveAuthHeader(provider: TokenProvider): Promise<string>;
 /** Encode an FMS account username + password into a `Basic …` header value. */
 export declare function basicAuth(user: string, password: string): string;
-/** Build an FMID auth header value for FileMaker Cloud (Claris ID token). */
-export declare function fmidAuth(token: string): string;
+/** Build a Bearer auth header value for an OAuth session token (FileMaker Cloud / external IdP). */
+export declare function bearerAuth(token: string): string;
 /** Auth scheme type (aligned with spec). */
 export type { FMAuthScheme, FMAuthToken, FMAuthTokenProvider } from '@fms-odata/spec-ts';
 /** Combine multiple `AbortSignal`s into one that aborts when any input aborts. */

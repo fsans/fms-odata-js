@@ -143,8 +143,8 @@ describe('Batch', () => {
 
     expect(result.ok).toBe(true)
     expect(result.responses).toHaveLength(1)
-    expect(result.responses[0].status).toBe(200)
-    expect(result.responses[0].body).toEqual(responseBody)
+    expect(result.responses[0]!.status).toBe(200)
+    expect(result.responses[0]!.body).toEqual(responseBody)
   })
 
   it('parses multiple responses in order', async () => {
@@ -183,8 +183,8 @@ describe('Batch', () => {
     const result = await batch.send()
 
     expect(result.ok).toBe(false)
-    expect(result.responses[0].status).toBe(404)
-    expect(result.responses[0].ok).toBe(false)
+    expect(result.responses[0]!.status).toBe(404)
+    expect(result.responses[0]!.ok).toBe(false)
   })
 
   it('sends correct Content-Type header', async () => {

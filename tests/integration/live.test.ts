@@ -238,18 +238,18 @@ describe.skipIf(!live)('live FMS integration', () => {
 
     // 3. Read response has status 200
     const readResp = result.responses[0]
-    expect(readResp.status).toBe(200)
-    expect(readResp.ok).toBe(true)
+    expect(readResp!.status).toBe(200)
+    expect(readResp!.ok).toBe(true)
 
     // 4. Changeset create response has status 201 (or 200)
     if (result.responses.length > 1) {
       const createResp = result.responses[1]
-      expect(createResp.ok).toBe(true)
-      expect(createResp.status).toBeGreaterThanOrEqual(200)
-      expect(createResp.status).toBeLessThan(300)
+      expect(createResp!.ok).toBe(true)
+      expect(createResp!.status).toBeGreaterThanOrEqual(200)
+      expect(createResp!.status).toBeLessThan(300)
 
       // Track the new row for cleanup
-      const body = createResp.body as Record<string, unknown> | undefined
+      const body = createResp!.body as Record<string, unknown> | undefined
       if (body) {
         const pkField = findPrimaryKey(body)
         if (pkField) {
