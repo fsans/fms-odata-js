@@ -5,7 +5,7 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [0.4.0] — 2025-01-09
 
 ### Fixed — DDL and webhook API alignment with real FileMaker Server
 
@@ -43,11 +43,11 @@ rejects; both modules now match the actual server behavior.
 
 ### Changed — Spec alignment with `@fms-odata/spec-ts` 2.0.0
 
-Bumped the shared spec dependency from `^1.1.0` to `^2.0.0` and aligned the
+Bumped the shared spec dependency from `^1.1.0` to `^2.0.1` and aligned the
 client with the v2.0.0 spec overhaul (drop FileMaker 19.x, corrected version
 history, OAuth/Bearer auth).
 
-- **Dependency:** `@fms-odata/spec-ts` `^1.1.0` → `^2.0.0`.
+- **Dependency:** `@fms-odata/spec-ts` `^1.1.0` → `^2.0.1`.
 - **Auth:** replaced the deprecated `fmidAuth()` helper (which produced the
   now-removed `FMID …` scheme) with `bearerAuth()` producing `Bearer …`
   headers, matching the spec's `FMOAuthAuthConfig` / `bearerAuth()`. The
