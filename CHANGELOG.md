@@ -7,6 +7,40 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed — DDL and webhook API alignment with real FileMaker Server
+
+Verified against a live FileMaker Server 26.0.1 instance and the official
+Claris OData guide. The previous implementations used URL formats that FMS
+rejects; both modules now match the actual server behavior.
+
+- **DDL URL format (`schema.ts`):** `addFields`, `deleteTable`, and
+  `deleteField` now use the slash-separated URL format
+  (`FileMaker_Tables/{table}`) that FMS accepts, instead of the OData
+  key-parentheses format (`FileMaker_Tables('{table}')`) which FMS rejects
+  with error `-1010` ("entity name must be specified"). The spec docs
+  documented the parentheses format, but the live server only accepts the
+  slash format for these operations.
+- **Webhook endpoints (`webhooks.ts`):** rewritten to match the official
+  Claris OData webhook API:
+  - `getAll()` now uses `GET /Webhook.GetAll` (was `POST`).
+  - `get(id)` now uses `GET /Webhook.Get({id})` with the id in the URL path
+    (was `POST /Webhook.Get` with `{ id }` body).
+  - `remove(id)` now uses `POST /Webhook.Delete({id})` with the id in the
+    URL path (was `POST /Webhook.Remove` with `{ id }` body). A `delete()`
+    alias is provided to match the FMS endpoint name.
+  - `invoke(id)` now uses `POST /Webhook.Invoke({id})` with the id in the
+    URL path and a required JSON body `{ rowIDs: [...] }` (was `POST
+    /Webhook.Invoke` with `{ id }` body). FMS rejects empty bodies.
+  - `create()` now returns `{ id: string }` extracted from the FMS response
+    `{ webhookResult: { webhookID: N } }` (previously returned the raw
+    response and callers had to guess the id field name).
+  - All id parameters now accept `string | number` (FMS issues integer IDs).
+- **Integration tests:** added `tests/integration/ddl-webhooks.test.ts`
+  covering DDL (create/addFields/index/deleteField/deleteTable) and webhook
+  management (create/get/getAll/invoke/remove) against a live FMS. Throwaway
+  tables and webhooks are created and cleaned up; production tables are
+  never touched.
+
 ### Changed — Spec alignment with `@fms-odata/spec-ts` 2.0.0
 
 Bumped the shared spec dependency from `^1.1.0` to `^2.0.0` and aligned the

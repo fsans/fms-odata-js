@@ -171,14 +171,14 @@ export declare class FMSOData {
     webhooks(): WebhookManager;
     /** Convenience: create a webhook. See {@link WebhookManager#create}. */
     createWebhook(params: import('@fms-odata/spec-ts').WebhookCreateParams, opts?: WebhookOptions): Promise<unknown>;
-    /** Convenience: remove a webhook by ID. See {@link WebhookManager#remove}. */
-    removeWebhook(id: string, opts?: WebhookOptions): Promise<unknown>;
+    /** Convenience: delete a webhook by ID. See {@link WebhookManager#remove}. */
+    removeWebhook(id: string | number, opts?: WebhookOptions): Promise<unknown>;
     /** Convenience: get a webhook by ID. See {@link WebhookManager#get}. */
-    getWebhook(id: string, opts?: WebhookOptions): Promise<unknown>;
+    getWebhook(id: string | number, opts?: WebhookOptions): Promise<unknown>;
     /** Convenience: list all webhooks. See {@link WebhookManager#getAll}. */
     getAllWebhooks(opts?: WebhookOptions): Promise<unknown>;
     /** Convenience: manually invoke a webhook by ID. See {@link WebhookManager#invoke}. */
-    invokeWebhook(id: string, opts?: WebhookOptions): Promise<unknown>;
+    invokeWebhook(id: string | number, opts?: WebhookOptions): Promise<unknown>;
     /**
      * Create a new `$batch` builder for composing multiple OData operations
      * into a single HTTP round-trip.

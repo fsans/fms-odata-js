@@ -331,13 +331,13 @@ export class FMSOData {
     return this.webhooks().create(params, opts)
   }
 
-  /** Convenience: remove a webhook by ID. See {@link WebhookManager#remove}. */
-  async removeWebhook(id: string, opts: WebhookOptions = {}): Promise<unknown> {
+  /** Convenience: delete a webhook by ID. See {@link WebhookManager#remove}. */
+  async removeWebhook(id: string | number, opts: WebhookOptions = {}): Promise<unknown> {
     return this.webhooks().remove(id, opts)
   }
 
   /** Convenience: get a webhook by ID. See {@link WebhookManager#get}. */
-  async getWebhook(id: string, opts: WebhookOptions = {}): Promise<unknown> {
+  async getWebhook(id: string | number, opts: WebhookOptions = {}): Promise<unknown> {
     return this.webhooks().get(id, opts)
   }
 
@@ -347,7 +347,7 @@ export class FMSOData {
   }
 
   /** Convenience: manually invoke a webhook by ID. See {@link WebhookManager#invoke}. */
-  async invokeWebhook(id: string, opts: WebhookOptions = {}): Promise<unknown> {
+  async invokeWebhook(id: string | number, opts: WebhookOptions = {}): Promise<unknown> {
     return this.webhooks().invoke(id, opts)
   }
 

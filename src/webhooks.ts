@@ -1,13 +1,16 @@
 /**
  * Webhook management for FileMaker Server OData.
  *
- * FMS exposes webhook management through five POST endpoints:
+ * FMS exposes webhook management through five endpoints following the
+ * standard OData function-call shape: read endpoints use GET, and action
+ * endpoints use POST with the `<id>` passed as a function argument in the
+ * URL path.
  *
- *   POST /<db>/Webhook.Add      — create a webhook
- *   POST /<db>/Webhook.Remove   — delete a webhook
- *   POST /<db>/Webhook.Get      — get a specific webhook's data
- *   POST /<db>/Webhook.GetAll   — list all webhooks
- *   POST /<db>/Webhook.Invoke   — manually trigger a webhook (for testing)
+ *   GET  /<db>/Webhook.GetAll        — list all webhooks
+ *   GET  /<db>/Webhook.Get(<id>)     — get one webhook by id
+ *   POST /<db>/Webhook.Add           — create a webhook (config in JSON body)
+ *   POST /<db>/Webhook.Delete(<id>)  — delete a webhook (id in URL path)
+ *   POST /<db>/Webhook.Invoke(<id>)  — manually trigger a webhook (id in URL path)
  *
  * Webhooks require FileMaker Server 2025+ (v22). Use
  * `db.hasFeature('webhooks')` to check before calling.
@@ -19,6 +22,7 @@ import type { WebhookCreateParams, WebhookData } from '@fms-odata/spec-ts'
 import type { FMSOData } from './client.js'
 import { executeJson } from './http.js'
 import type { RequestOptions } from './types.js'
+import { encodePathSegment } from './url.js'
 
 /** Options accepted by webhook operations. */
 export interface WebhookOptions extends RequestOptions {}
@@ -43,6 +47,20 @@ function normalizeCreateParams(params: WebhookCreateParams): Record<string, unkn
 }
 
 /**
+ * Extract the webhook ID from a `Webhook.Add` response.
+ *
+ * FMS returns `{ webhookResult: { webhookID: N } }`. Older or alternate
+ * shapes (`{ webhookID: N }`, `{ id: N }`) are accepted as fallbacks.
+ */
+function extractWebhookId(data: unknown): string | undefined {
+  if (!data || typeof data !== 'object') return undefined
+  const obj = data as Record<string, unknown>
+  const fromResult = obj.webhookResult as Record<string, unknown> | undefined
+  const id = fromResult?.webhookID ?? obj.webhookID ?? obj.id
+  return id !== undefined ? String(id) : undefined
+}
+
+/**
  * Webhook manager for FileMaker Server webhook CRUD.
  *
  * Obtain an instance via `db.webhooks()` or use the convenience methods on
@@ -58,15 +76,16 @@ export class WebhookManager {
   }
 
   /** Build the URL for a webhook operation. */
-  private _url(operation: 'Add' | 'Remove' | 'Get' | 'GetAll' | 'Invoke'): string {
-    return `${this._client.baseUrl}/Webhook.${operation}`
+  private _url(operation: 'Add' | 'Delete' | 'Get' | 'GetAll' | 'Invoke', id?: string | number): string {
+    const base = `${this._client.baseUrl}/Webhook.${operation}`
+    return id !== undefined ? `${base}(${encodePathSegment(String(id))})` : base
   }
 
   /**
    * Create a webhook.
    *
    * ```ts
-   * await db.webhooks().create({
+   * const { id } = await db.webhooks().create({
    *   webhook: 'https://my.example.com:8080/webhook',
    *   tableName: 'contact',
    *   select: 'id,first_name',
@@ -74,55 +93,63 @@ export class WebhookManager {
    *   notifySchemaChanges: true,
    * })
    * ```
+   *
+   * @returns An object with the server-generated `id` of the new webhook.
    */
   async create(
     params: WebhookCreateParams,
     opts: WebhookOptions = {},
-  ): Promise<unknown> {
+  ): Promise<{ id: string }> {
     if (!params.webhook) throw new TypeError('WebhookManager: `webhook` URL is required')
     if (!params.tableName) throw new TypeError('WebhookManager: `tableName` is required')
 
     const body = JSON.stringify(normalizeCreateParams(params))
-    return executeJson<unknown>(this._client._ctx, this._url('Add'), {
+    const data = await executeJson<unknown>(this._client._ctx, this._url('Add'), {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body,
       accept: 'json',
       ...(opts.signal ? { signal: opts.signal } : {}),
     })
+    const id = extractWebhookId(data)
+    if (id === undefined) {
+      throw new Error('WebhookManager: Webhook.Add did not return a webhook id')
+    }
+    return { id }
   }
 
   /**
-   * Remove (delete) a webhook by its ID.
+   * Delete a webhook by its ID.
    *
    * ```ts
-   * await db.webhooks().remove('abc123')
+   * await db.webhooks().remove('1')
    * ```
    */
-  async remove(id: string, opts: WebhookOptions = {}): Promise<unknown> {
-    if (!id) throw new TypeError('WebhookManager: webhook `id` is required')
-    return executeJson<unknown>(this._client._ctx, this._url('Remove'), {
+  async remove(id: string | number, opts: WebhookOptions = {}): Promise<unknown> {
+    if (id === '' || id === undefined) throw new TypeError('WebhookManager: webhook `id` is required')
+    return executeJson<unknown>(this._client._ctx, this._url('Delete', id), {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ id }),
       accept: 'json',
       ...(opts.signal ? { signal: opts.signal } : {}),
     })
+  }
+
+  /** Alias for {@link remove} (matches the FMS endpoint name `Webhook.Delete`). */
+  async delete(id: string | number, opts: WebhookOptions = {}): Promise<unknown> {
+    return this.remove(id, opts)
   }
 
   /**
    * Get a specific webhook's data by ID.
    *
    * ```ts
-   * const data = await db.webhooks().get('abc123')
+   * const data = await db.webhooks().get('1')
    * ```
    */
-  async get(id: string, opts: WebhookOptions = {}): Promise<WebhookData | unknown> {
-    if (!id) throw new TypeError('WebhookManager: webhook `id` is required')
-    return executeJson<unknown>(this._client._ctx, this._url('Get'), {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ id }),
+  async get(id: string | number, opts: WebhookOptions = {}): Promise<WebhookData | unknown> {
+    if (id === '' || id === undefined) throw new TypeError('WebhookManager: webhook `id` is required')
+    return executeJson<unknown>(this._client._ctx, this._url('Get', id), {
+      method: 'GET',
       accept: 'json',
       ...(opts.signal ? { signal: opts.signal } : {}),
     })
@@ -137,8 +164,7 @@ export class WebhookManager {
    */
   async getAll(opts: WebhookOptions = {}): Promise<unknown> {
     return executeJson<unknown>(this._client._ctx, this._url('GetAll'), {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      method: 'GET',
       accept: 'json',
       ...(opts.signal ? { signal: opts.signal } : {}),
     })
@@ -147,18 +173,31 @@ export class WebhookManager {
   /**
    * Manually invoke (trigger) a webhook by ID. Useful for testing.
    *
+   * Optionally pass `rowIDs` to target specific records; if omitted, FMS
+   * triggers the webhook for all pending records.
+   *
    * ```ts
-   * await db.webhooks().invoke('abc123')
+   * await db.webhooks().invoke('1')
+   * await db.webhooks().invoke('1', { rowIDs: [10, 20] })
    * ```
    */
-  async invoke(id: string, opts: WebhookOptions = {}): Promise<unknown> {
-    if (!id) throw new TypeError('WebhookManager: webhook `id` is required')
-    return executeJson<unknown>(this._client._ctx, this._url('Invoke'), {
+  async invoke(
+    id: string | number,
+    opts: WebhookOptions & { rowIDs?: ReadonlyArray<string | number> } = {},
+  ): Promise<unknown> {
+    if (id === '' || id === undefined) throw new TypeError('WebhookManager: webhook `id` is required')
+    const { rowIDs, signal, ...rest } = opts
+    // FMS requires a JSON body for Invoke (it rejects empty bodies with a
+    // JSON syntax error). Send { rowIDs: [...] } — an empty array triggers
+    // the webhook for all pending records.
+    const body = JSON.stringify({ rowIDs: rowIDs ? [...rowIDs] : [] })
+    return executeJson<unknown>(this._client._ctx, this._url('Invoke', id), {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ id }),
+      body,
       accept: 'json',
-      ...(opts.signal ? { signal: opts.signal } : {}),
+      ...(signal ? { signal } : {}),
+      ...rest,
     })
   }
 }

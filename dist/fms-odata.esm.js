@@ -2076,7 +2076,7 @@ var SchemaEditor = class {
     if (!params.tableName) throw new TypeError("SchemaEditor: `tableName` is required");
     if (!params.fields?.length) throw new TypeError("SchemaEditor: `fields` must be a non-empty array");
     validateFieldDefinitions(params.fields);
-    const url = `${this._client.baseUrl}/FileMaker_Tables('${encodePathSegment(params.tableName)}')`;
+    const url = `${this._client.baseUrl}/FileMaker_Tables/${encodePathSegment(params.tableName)}`;
     return executeJson(this._client._ctx, url, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
@@ -2101,7 +2101,7 @@ var SchemaEditor = class {
         `SchemaEditor: deleteTable("${tableName}") requires { confirm: true } \u2014 this operation permanently destroys the table and all its records.`
       );
     }
-    const url = `${this._client.baseUrl}/FileMaker_Tables('${encodePathSegment(tableName)}')`;
+    const url = `${this._client.baseUrl}/FileMaker_Tables/${encodePathSegment(tableName)}`;
     await executeJson(this._client._ctx, url, {
       method: "DELETE",
       accept: "json",
@@ -2125,7 +2125,7 @@ var SchemaEditor = class {
         `SchemaEditor: deleteField("${tableName}", "${fieldName}") requires { confirm: true } \u2014 this operation permanently destroys the field and all its data.`
       );
     }
-    const url = `${this._client.baseUrl}/FileMaker_Tables('${encodePathSegment(tableName)}')/${encodePathSegment(fieldName)}`;
+    const url = `${this._client.baseUrl}/FileMaker_Tables/${encodePathSegment(tableName)}/${encodePathSegment(fieldName)}`;
     await executeJson(this._client._ctx, url, {
       method: "DELETE",
       accept: "json",
@@ -2185,19 +2185,27 @@ function normalizeCreateParams(params) {
   if (params.maxFailedAttempts !== void 0) out.maxFailedAttempts = params.maxFailedAttempts;
   return out;
 }
+function extractWebhookId(data) {
+  if (!data || typeof data !== "object") return void 0;
+  const obj = data;
+  const fromResult = obj.webhookResult;
+  const id = fromResult?.webhookID ?? obj.webhookID ?? obj.id;
+  return id !== void 0 ? String(id) : void 0;
+}
 var WebhookManager = class {
   constructor(client) {
     this._client = client;
   }
   /** Build the URL for a webhook operation. */
-  _url(operation) {
-    return `${this._client.baseUrl}/Webhook.${operation}`;
+  _url(operation, id) {
+    const base = `${this._client.baseUrl}/Webhook.${operation}`;
+    return id !== void 0 ? `${base}(${encodePathSegment(String(id))})` : base;
   }
   /**
    * Create a webhook.
    *
    * ```ts
-   * await db.webhooks().create({
+   * const { id } = await db.webhooks().create({
    *   webhook: 'https://my.example.com:8080/webhook',
    *   tableName: 'contact',
    *   select: 'id,first_name',
@@ -2205,49 +2213,56 @@ var WebhookManager = class {
    *   notifySchemaChanges: true,
    * })
    * ```
+   *
+   * @returns An object with the server-generated `id` of the new webhook.
    */
   async create(params, opts = {}) {
     if (!params.webhook) throw new TypeError("WebhookManager: `webhook` URL is required");
     if (!params.tableName) throw new TypeError("WebhookManager: `tableName` is required");
     const body = JSON.stringify(normalizeCreateParams(params));
-    return executeJson(this._client._ctx, this._url("Add"), {
+    const data = await executeJson(this._client._ctx, this._url("Add"), {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body,
       accept: "json",
       ...opts.signal ? { signal: opts.signal } : {}
     });
+    const id = extractWebhookId(data);
+    if (id === void 0) {
+      throw new Error("WebhookManager: Webhook.Add did not return a webhook id");
+    }
+    return { id };
   }
   /**
-   * Remove (delete) a webhook by its ID.
+   * Delete a webhook by its ID.
    *
    * ```ts
-   * await db.webhooks().remove('abc123')
+   * await db.webhooks().remove('1')
    * ```
    */
   async remove(id, opts = {}) {
-    if (!id) throw new TypeError("WebhookManager: webhook `id` is required");
-    return executeJson(this._client._ctx, this._url("Remove"), {
+    if (id === "" || id === void 0) throw new TypeError("WebhookManager: webhook `id` is required");
+    return executeJson(this._client._ctx, this._url("Delete", id), {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ id }),
       accept: "json",
       ...opts.signal ? { signal: opts.signal } : {}
     });
+  }
+  /** Alias for {@link remove} (matches the FMS endpoint name `Webhook.Delete`). */
+  async delete(id, opts = {}) {
+    return this.remove(id, opts);
   }
   /**
    * Get a specific webhook's data by ID.
    *
    * ```ts
-   * const data = await db.webhooks().get('abc123')
+   * const data = await db.webhooks().get('1')
    * ```
    */
   async get(id, opts = {}) {
-    if (!id) throw new TypeError("WebhookManager: webhook `id` is required");
-    return executeJson(this._client._ctx, this._url("Get"), {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ id }),
+    if (id === "" || id === void 0) throw new TypeError("WebhookManager: webhook `id` is required");
+    return executeJson(this._client._ctx, this._url("Get", id), {
+      method: "GET",
       accept: "json",
       ...opts.signal ? { signal: opts.signal } : {}
     });
@@ -2261,8 +2276,7 @@ var WebhookManager = class {
    */
   async getAll(opts = {}) {
     return executeJson(this._client._ctx, this._url("GetAll"), {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
+      method: "GET",
       accept: "json",
       ...opts.signal ? { signal: opts.signal } : {}
     });
@@ -2270,18 +2284,25 @@ var WebhookManager = class {
   /**
    * Manually invoke (trigger) a webhook by ID. Useful for testing.
    *
+   * Optionally pass `rowIDs` to target specific records; if omitted, FMS
+   * triggers the webhook for all pending records.
+   *
    * ```ts
-   * await db.webhooks().invoke('abc123')
+   * await db.webhooks().invoke('1')
+   * await db.webhooks().invoke('1', { rowIDs: [10, 20] })
    * ```
    */
   async invoke(id, opts = {}) {
-    if (!id) throw new TypeError("WebhookManager: webhook `id` is required");
-    return executeJson(this._client._ctx, this._url("Invoke"), {
+    if (id === "" || id === void 0) throw new TypeError("WebhookManager: webhook `id` is required");
+    const { rowIDs, signal, ...rest } = opts;
+    const body = JSON.stringify({ rowIDs: rowIDs ? [...rowIDs] : [] });
+    return executeJson(this._client._ctx, this._url("Invoke", id), {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ id }),
+      body,
       accept: "json",
-      ...opts.signal ? { signal: opts.signal } : {}
+      ...signal ? { signal } : {},
+      ...rest
     });
   }
 };
@@ -2526,7 +2547,7 @@ var FMSOData = class {
   async createWebhook(params, opts = {}) {
     return this.webhooks().create(params, opts);
   }
-  /** Convenience: remove a webhook by ID. See {@link WebhookManager#remove}. */
+  /** Convenience: delete a webhook by ID. See {@link WebhookManager#remove}. */
   async removeWebhook(id, opts = {}) {
     return this.webhooks().remove(id, opts);
   }
