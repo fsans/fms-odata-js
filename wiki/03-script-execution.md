@@ -9,9 +9,11 @@ All script invocations are performed via HTTP `POST` requests to a `Script.<Scri
 The library handles the serialization of parameters, URL construction based on scope, and the normalization of the FileMaker response envelope.
 
 #### Data Transformation Logic
+
 The following diagram illustrates how a script call moves from the high-level API through the `ScriptInvoker` to the network.
 
 **Diagram: Script Invocation Pipeline**
+
 ```mermaid
 graph TD
   subgraph "Natural Language Space"
@@ -35,6 +37,7 @@ graph TD
   F -- "Error: FMScriptError" --> H["Catch Block"]
 end
 ```
+
 Sources: [src/scripts.ts:103-123](), [src/scripts.ts:131-160]()
 
 ---
@@ -77,6 +80,7 @@ FileMaker Server returns a JSON envelope containing the script's exit status and
 *   **`raw`**: The full parsed response body for forward compatibility [src/scripts.ts:46-47]().
 
 **Diagram: Response Handling**
+
 ```mermaid
 graph LR
   subgraph "FMS Response Body"
@@ -93,6 +97,7 @@ graph LR
   P -- "if scriptError == '0'" --> SR
   P -- "if scriptError != '0'" --> FE
 ```
+
 Sources: [src/scripts.ts:131-160](), [src/errors.ts:17-18]()
 
 ---

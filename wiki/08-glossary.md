@@ -5,6 +5,7 @@ This page provides definitions for the terminology, architectural concepts, and 
 ## Core Concepts
 
 ### FMS Quirks
+
 Refers to the specific deviations from the OData v4 specification exhibited by FileMaker Server. The library is designed to abstract these "sharp corners" away from the consumer [README.md:19-21]().
 
 | Quirk | Description | Library Workaround |
@@ -19,6 +20,7 @@ Refers to the specific deviations from the OData v4 specification exhibited by F
 ---
 
 ### Script Scopes
+
 FileMaker scripts can be invoked via OData Actions at three distinct levels of context. This context determines what FileMaker considers the "Current Record" or "Current Layout" during execution [src/scripts.ts:4-10]().
 
 *   **Database Scope**: The script runs without a specific layout context (unless handled within the script) [src/scripts.ts:7]().
@@ -26,9 +28,11 @@ FileMaker scripts can be invoked via OData Actions at three distinct levels of c
 *   **Record Scope**: The script runs with a specific record as the current record context [src/scripts.ts:9]().
 
 #### Script Execution Data Flow
+
 The following diagram bridges the natural language "Scope" to the internal `ScriptInvoker` logic.
 
 **Diagram: Script Invocation Logic**
+
 ```mermaid
 graph TD
     subgraph "Natural Language Space"
@@ -54,6 +58,7 @@ graph TD
     ENV_EXT --> PSE
     PSE -->|"throws FMScriptError if error != '0'"| Result["ScriptResult"]
 ```
+
 **Sources:** [src/scripts.ts:4-14](), [src/scripts.ts:76-123](), [src/scripts.ts:131-181]()
 
 ---
@@ -61,19 +66,25 @@ graph TD
 ## Technical Terminology
 
 ### ODataLiteral
+
 A TypeScript union type representing the primitive values that can be safely serialized into an OData URL or filter expression.
+
 *   **Definition**: `string | number | boolean | Date | null` [src/url.ts:19]().
 *   **Formatting**: Handled by `formatLiteral` which applies single quotes to strings and escapes internal quotes [src/url.ts:168-180]().
 
 ### HttpClientContext (`_ctx`)
+
 An internal object passed throughout the library to maintain shared state for HTTP requests without exposing it to the end-user.
+
 *   **Fields**: Includes `fetch` implementation, `token` provider, `timeoutMs`, and `onUnauthorized` callback [src/http.ts:97-105]().
 *   **Usage**: Initialized in `FMSOData` constructor and passed to `Query`, `EntityRef`, and `ScriptInvoker` [src/query.ts:140-143]().
 
 ### Fluent Query Builder
+
 The `Query<T>` class provides a chainable interface for building OData queries. It maintains an internal `QueryOptionsState` which is only serialized to a URL at the moment of execution [src/query.ts:121-133]().
 
 **Diagram: Query Building to HTTP Request**
+
 ```mermaid
 graph LR
     subgraph "Code Entity Space"
@@ -89,15 +100,19 @@ graph LR
     TO_URL -->|"buildQueryString()"| EXEC
     EXEC -->|"fetch()"| Network["FMS OData API"]
 ```
+
 **Sources:** [src/query.ts:133-213](), [src/http.ts:138-156]()
 
 ---
 
 ### EntityRef
+
 A handle to a single record in FileMaker, identified by its primary key. Unlike a `Query`, which returns collections, an `EntityRef` performs targeted operations like `PATCH` (update) and `DELETE` [src/entity.ts:2-10]().
 
 ### FMScriptError
+
 A specialized subclass of `FMSODataError`. It is thrown when the HTTP request to a script action succeeds (200 OK), but the FileMaker script itself returns a non-zero error code [src/errors.ts:85-111]().
+
 *   **scriptError**: The FileMaker error code (e.g., "101" for Record Missing) [src/errors.ts:87]().
 *   **scriptResult**: The string returned by the `Exit Script` step [src/errors.ts:89]().
 

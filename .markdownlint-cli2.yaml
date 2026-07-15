@@ -1,0 +1,59 @@
+# markdownlint-cli2 configuration
+# https://github.com/DavidAnson/markdownlint-cli2#configuration
+
+config:
+  # Line length: docs contain code references and URLs that exceed 80 chars.
+  # Disable rather than set a high limit — enforcing line length on prose
+  # wrapped in markdown is not useful.
+  MD013: false
+
+  # Empty links: wiki files use [src/file.ts:7]() as source references.
+  # These are intentional and render as plain text with a tooltip in most
+  # markdown renderers. Disabling rather than converting to code spans
+  # preserves the existing wiki style.
+  MD042: false
+
+  # List marker space: wiki files use "*   " (3 spaces) consistently.
+  # This is valid markdown and renders correctly. Disabling to avoid
+  # churn across all wiki files.
+  MD030: false
+
+  # Emphasis as heading: wiki uses **bold** lines as pseudo-headings in
+  # some diagram descriptions. These are intentional styling choices.
+  MD036: false
+
+  # Table column style: wiki tables use compact pipe style without
+  # padding spaces. This is valid markdown.
+  MD060: false
+
+  # Multiple headings with the same content: wiki has repeated section
+  # names across different pages that are concatenated.
+  MD024:
+    siblings_only: true
+
+  # Bare URLs: allow bare URLs in prose (used in CHANGELOG and docs).
+  MD034: false
+
+  # Link fragments: wiki uses custom numbering (#3.2, #6.1, etc.) for
+  # cross-references that don't match GitHub heading slug conventions.
+  MD051: false
+
+  # Spaces in links: wiki uses [ src/file.ts:7 ]() with spaces inside
+  # brackets as a source reference style.
+  MD039: false
+
+  # Inline HTML: README uses <div align="center"> for badge layout.
+  MD033: false
+
+  # First line heading: README starts with a <div> for centered badges.
+  MD041: false
+
+  # Heading increment: wiki pages start at h3 (###) by convention, skipping h2.
+  MD001: false
+
+# Only lint our own markdown files, not node_modules or dist.
+globs:
+  - "README.md"
+  - "CHANGELOG.md"
+  - "wiki/*.md"
+  - "examples/*/README.md"

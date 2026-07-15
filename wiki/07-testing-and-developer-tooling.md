@@ -19,6 +19,7 @@ For a deep dive into running and writing tests, see [Unit and Integration Tests]
 The `scripts/` directory contains Node.js utilities that assist in local development and troubleshooting. These tools handle environment configuration, SSL/TLS workarounds for local FileMaker Servers, and a "probe" utility to verify OData connectivity and schema visibility.
 
 **Key Developer Commands:**
+
 *   `npm run probe`: Executes a connectivity check against the configured FMS.
 *   `npm run lint` / `npm run format`: Maintains code quality and style consistency.
 *   `npm run size`: Tracks the minified bundle size to ensure the library remains lightweight.
@@ -30,6 +31,7 @@ For details on utilizing these utilities, see [Developer Scripts and Probe Utili
 The following diagram illustrates how the developer scripts and test suites interact with the library source and external FileMaker environments.
 
 **Developer Tooling Flow**
+
 ```mermaid
 graph TD
   subgraph "Local Environment"
@@ -49,6 +51,7 @@ graph TD
   ["scripts/probe.mjs"] -- "validates" --> ["FileMaker Server"]
   ["Integration Tests"] -- "exercises" --> ["FileMaker Server"]
 ```
+
 Sources: [scripts/env.mjs:1-13](), [tests/integration/live.test.ts:1-26](), [vitest.config.ts:1-13](), [playwright.config.ts:1-11]()
 
 ### Testing and Entity Space Mapping
@@ -56,6 +59,7 @@ Sources: [scripts/env.mjs:1-13](), [tests/integration/live.test.ts:1-26](), [vit
 The test infrastructure maps directly to the core library components, ensuring that every layer of the `src/` directory is exercised.
 
 **Code Coverage Mapping**
+
 ```mermaid
 graph LR
   subgraph "Test Suite"
@@ -77,6 +81,7 @@ graph LR
   ["tests/unit/url.test.ts"] -.-> ["src/url.ts"]
   ["tests/integration/live.test.ts"] -- "Full Stack" --> ["src/http.ts"]
 ```
+
 Sources: [vitest.config.ts:4-11](), [tests/integration/live.test.ts:11-26]()
 
 ### Live Integration Workflow

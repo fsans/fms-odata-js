@@ -61,6 +61,7 @@ Both have identical UI and behavior. The inline version bundles **v0.4.0** of th
 The Web Viewer demo focuses on visual table browsing. To test the advanced features:
 
 ### Container Fields (M4)
+
 Add a container field to your `contact` table:
 
 ```javascript
@@ -78,6 +79,7 @@ await container.upload({
 ```
 
 ### Metadata (M5)
+
 Introspect the database schema:
 
 ```javascript
@@ -87,6 +89,7 @@ console.log('Fields:', meta.entityTypes[0].properties.map(p => p.name));
 ```
 
 ### Batch Operations (M6)
+
 Send multiple operations in one request:
 
 ```javascript
@@ -110,6 +113,7 @@ console.log('Responses:', result.responses);
 ```
 
 ### Version Detection & Aggregation (v0.2.0)
+
 Detect server version and use `$apply` aggregation:
 
 ```javascript
@@ -137,12 +141,15 @@ See the [`consumer-node`](../consumer-node) example for complete runnable demos 
 ## Embedding in a Web Viewer
 
 ### Option 1: External URL
+
 Host `index.html` on a web server or FMS and load via HTTPS:
-```
+
+```text
 https://your-server/fms-odata-js/examples/webviewer/index.html
 ```
 
 ### Option 2: Data URL (inline HTML)
+
 Copy the entire contents of `index-inline.html` into a calculation:
 
 ```filemaker
@@ -151,11 +158,13 @@ Copy the entire contents of `index-inline.html` into a calculation:
 ```
 
 ### Option 3: FileMaker 19+ Script
+
 Use `Set Web Viewer` with a calculated HTML string for completely offline operation.
 
 ## CORS Requirements
 
 Web Viewers run under `fmp://` or `null` origin. Your FMS must either:
+
 - Send permissive CORS headers for the OData endpoint, or
 - Be accessed via the same origin (Data API container field serving)
 
@@ -191,6 +200,7 @@ The browser's `fetch()` API cannot skip certificate validation. If your FMS uses
 - **v0.1.1** — M1-M3 (basic CRUD + scripts)
 
 To use a specific version, change the URL in `index.html`:
+
 ```html
 import { FMSOData } from 'https://cdn.jsdelivr.net/gh/fsans/fms-odata-js@v0.4.0/dist/fms-odata.esm.min.js'
 ```

@@ -15,6 +15,7 @@
 The following diagram illustrates how `fms-odata-js` bridges the gap between JavaScript environments and FileMaker Server.
 
 **Bridge: Environment to Code Entity**
+
 ```mermaid
 graph TD
     subgraph "Natural Language Space"
@@ -38,6 +39,7 @@ graph TD
     F -- "Action Endpoint" --> C
     G -- "Resource Path" --> C
 ```
+
 Sources: [README.md:7-12](), [src/http.ts:1-20](), [CHANGELOG.md:14-19]()
 
 ---
@@ -45,6 +47,7 @@ Sources: [README.md:7-12](), [src/http.ts:1-20](), [CHANGELOG.md:14-19]()
 ## Supported Environments
 
 The library is designed to run anywhere modern JavaScript is supported:
+
 *   **FileMaker Web Viewer:** Ideal for building rich UIs that interact directly with the hosted database [README.md:23-23]().
 *   **Node.js:** Version 18 or higher is required for native `fetch` support [package.json:48-49]().
 *   **Browsers:** Compatible with all modern browsers via ESM.
@@ -56,6 +59,7 @@ The library is designed to run anywhere modern JavaScript is supported:
 The library organizes FileMaker interactions into three primary scopes: Database, Entity-Set (Table), and Record.
 
 **Bridge: Functional Scopes to Code Entities**
+
 ```mermaid
 graph LR
     subgraph "Scope Levels"
@@ -81,6 +85,7 @@ graph LR
     QRY -- ".script()" --> ActionES["Table/Script.<name>"]
     EREF -- ".script()" --> ActionREC["Table(id)/Script.<name>"]
 ```
+
 Sources: [CHANGELOG.md:14-19](), [README.md:114-123](), [src/index.ts:1-10]()
 
 | Feature | Description |
@@ -104,10 +109,12 @@ Sources: [CHANGELOG.md:14-19](), [README.md:114-123](), [src/index.ts:1-10]()
 For deeper technical details, please refer to the following pages:
 
 ### [Getting Started](#1.1)
+
 Step-by-step instructions for installing the library via GitHub or local checkout. Covers initial configuration, including the `.env` setup for development and how to instantiate the `FMSOData` client with `basicAuth`.
 For details, see [Getting Started](#1.1).
 
 ### [Build System and Distribution](#1.2)
+
 Technical details on the build pipeline using `tsc` and `esbuild`. Explains the distribution artifacts (`.esm.js`, `.esm.min.js`, `.iife.min.js`, and `.d.ts`) and the `sideEffects: false` optimization for tree-shaking.
 For details, see [Build System and Distribution](#1.2).
 
