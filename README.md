@@ -14,6 +14,7 @@ Zero runtime dependencies · ~11.1 KB gzipped · ESM + IIFE · Web Viewer / Brow
 [![Node](https://img.shields.io/badge/node-%3E%3D18-339933?logo=node.js&logoColor=white)](#)
 [![License](https://img.shields.io/badge/license-MIT-black)](./LICENSE)
 [![Spec](https://img.shields.io/badge/spec-fms--odata--spec-FF6B00?logo=filemaker&logoColor=white)](https://github.com/fsans/fms-odata-spec)
+[![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/fsans/fms-odata-js)
 
 </div>
 
