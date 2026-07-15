@@ -1,4 +1,4 @@
-// fms-odata-js comprehensive consumer example (v0.3.0)
+// fms-odata-js comprehensive consumer example (v0.4.0)
 //
 // Demonstrates all major features:
 // - Basic CRUD queries (M1-M2)
@@ -9,6 +9,8 @@
 // - Version detection & feature gating (v0.2.0)
 // - $apply aggregation (v0.2.0)
 // - Navigation properties / $ref (v0.2.0)
+// - Schema editing / DDL (v0.4.0)
+// - Webhook management (v0.4.0)
 //
 // Environment (standardized names preferred, legacy FM_ODATA_* accepted as fallback):
 //   FM_SERVER                  e.g. https://192.168.0.24
@@ -323,6 +325,125 @@ try {
   }
 } catch (err) {
   console.log(`$ref      ERROR: ${err.message}`)
+}
+
+console.log()
+console.log('='.repeat(60))
+console.log('8. SCHEMA EDITING / DDL (v0.4.0)')
+console.log('='.repeat(60))
+
+// DDL requires FMS 2023+ (v20). These operations modify the database schema.
+// We create a throwaway table, add fields, create an index, then clean up.
+const ddlTable = `ddl_test_${Date.now().toString(36)}`
+try {
+  const canDdl = await db.hasFeature('schemaModification')
+  if (!canDdl) {
+    console.log('ddl       server does not support schema editing (needs FMS 2023+) — skipping')
+  } else {
+    // Create a throwaway table
+    await db.schema().createTable({
+      tableName: ddlTable,
+      fields: [
+        { name: 'id', type: 'int', primary: true },
+        { name: 'name', type: 'varchar(100)', nullable: false },
+        { name: 'note', type: 'varchar(255)', nullable: true },
+      ],
+    })
+    console.log(`ddl       created table "${ddlTable}"`)
+
+    // Add fields
+    await db.schema().addFields({
+      tableName: ddlTable,
+      fields: [{ name: 'email', type: 'varchar(200)', nullable: true }],
+    })
+    console.log(`ddl       added field "email" to "${ddlTable}"`)
+
+    // Create an index
+    await db.schema().createIndex(ddlTable, 'name')
+    console.log(`ddl       created index on "name"`)
+
+    // Delete a field
+    await db.schema().deleteField(ddlTable, 'note', { confirm: true })
+    console.log(`ddl       deleted field "note" from "${ddlTable}"`)
+
+    // Clean up: delete the throwaway table
+    await db.schema().deleteTable(ddlTable, { confirm: true })
+    console.log(`ddl       deleted throwaway table "${ddlTable}" (cleanup)`)
+  }
+} catch (err) {
+  console.log(`ddl       ERROR: ${err.message}`)
+  // Best-effort cleanup
+  try { await db.schema().deleteTable(ddlTable, { confirm: true }) } catch {}
+}
+
+console.log()
+console.log('='.repeat(60))
+console.log('9. WEBHOOK MANAGEMENT (v0.4.0)')
+console.log('='.repeat(60))
+
+// Webhooks require FMS 2025+ (v22). We create a throwaway webhook, list all,
+// get it by ID, invoke it, then clean up.
+const whTable = `wh_test_${Date.now().toString(36)}`
+let whId = null
+try {
+  const canWebhooks = await db.hasFeature('webhooks')
+  if (!canWebhooks) {
+    console.log('webhook   server does not support webhooks (needs FMS 2025+) — skipping')
+  } else {
+    // Create a throwaway table for the webhook (webhooks need a table)
+    await db.schema().createTable({
+      tableName: whTable,
+      fields: [
+        { name: 'id', type: 'int', primary: true },
+        { name: 'name', type: 'varchar(100)', nullable: true },
+      ],
+    })
+
+    // Create a webhook pointing to a non-routable endpoint (we're testing
+    // the management API, not actual payload delivery)
+    const { id } = await db.webhooks().create({
+      webhook: 'https://localhost:9999/fms-test-webhook',
+      tableName: whTable,
+    })
+    whId = id
+    console.log(`webhook   created webhook id=${id} on table "${whTable}"`)
+
+    // List all webhooks
+    const allResult = await db.webhooks().getAll()
+    const allWebhooks = allResult?.webhooks ?? allResult
+    console.log(`webhook   getAll: ${Array.isArray(allWebhooks) ? allWebhooks.length : '?'} webhook(s) total`)
+
+    // Get specific webhook
+    const whData = await db.webhooks().get(id)
+    console.log(`webhook   get(${id}): ${JSON.stringify(whData).slice(0, 80)}...`)
+
+    // Invoke (trigger) the webhook — will fail to deliver since endpoint is
+    // non-routable, but the management API call itself succeeds
+    try {
+      await db.webhooks().invoke(id)
+      console.log(`webhook   invoke(${id}): triggered`)
+    } catch (invokeErr) {
+      // "Connection failed" (1631) is expected — endpoint is non-routable
+      if (invokeErr instanceof FMSODataError && (invokeErr.code === '1631' || /connection failed/i.test(invokeErr.message))) {
+        console.log(`webhook   invoke(${id}): API call OK (delivery failed as expected — endpoint is non-routable)`)
+      } else {
+        throw invokeErr
+      }
+    }
+
+    // Clean up: delete the webhook
+    await db.webhooks().remove(id)
+    console.log(`webhook   deleted webhook id=${id} (cleanup)`)
+
+    // Clean up: delete the throwaway table
+    await db.schema().deleteTable(whTable, { confirm: true })
+    console.log(`webhook   deleted throwaway table "${whTable}" (cleanup)`)
+  }
+} catch (err) {
+  console.log(`webhook   ERROR: ${err.message}`)
+  // Best-effort cleanup
+  try { if (whId) await db.webhooks().remove(whId) } catch {}
+  try { await db.schema().deleteTable(whTable, { confirm: true }) } catch {}
 }
 
 console.log()

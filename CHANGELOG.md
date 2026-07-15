@@ -41,7 +41,7 @@ rejects; both modules now match the actual server behavior.
   tables and webhooks are created and cleaned up; production tables are
   never touched.
 
-### Changed — Spec alignment with `@fms-odata/spec-ts` 2.0.0
+### Changed — Spec alignment with `@fms-odata/spec-ts` 2.0
 
 Bumped the shared spec dependency from `^1.1.0` to `^2.0.1` and aligned the
 client with the v2.0.0 spec overhaul (drop FileMaker 19.x, corrected version
