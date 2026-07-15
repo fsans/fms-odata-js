@@ -6,9 +6,9 @@
 
 *   **Zero Runtime Dependencies:** The library is built to be extremely lightweight (~9.1 KB gzipped), ensuring fast load times in restricted environments like the FileMaker Web Viewer [README.md:27-27]().
 *   **ESM + IIFE:** Distributed as both an ES module and an IIFE bundle (global `FMSODataLib`), making it compatible with modern build tools, Node.js 18+, direct browser imports, and `<script>` tag inclusion without a bundler [package.json:5-8]().
-*   **FileMaker-Aware:** Automatically handles FMS-specific behaviors such as Basic/FMID auth requirements, specialized date formatting, and script execution envelopes [README.md:30-30]().
+*   **FileMaker-Aware:** Automatically handles FMS-specific behaviors such as Basic/Bearer auth requirements, specialized date formatting, and script execution envelopes [README.md:30-30]().
 *   **Type Safety:** Provides full TypeScript inference for query building and response handling [README.md:28-28]().
-*   **Version-Aware:** Detects the FileMaker Server major version (19, 21, 22, 26) from `$metadata` and gates features accordingly [README.md:31-31]().
+*   **Version-Aware:** Detects the FileMaker Server major version (20, 21, 22, 26) from `$metadata` and gates features accordingly [README.md:31-31]().
 
 ### System Context
 
@@ -33,7 +33,7 @@ graph TD
     A --> D
     B --> D
     D --> E
-    E -- "HTTP Basic/Bearer/FMID" --> C
+    E -- "HTTP Basic/Bearer" --> C
     C -- "JSON/XML" --> E
     F -- "Action Endpoint" --> C
     G -- "Resource Path" --> C
@@ -94,7 +94,7 @@ Sources: [CHANGELOG.md:14-19](), [README.md:114-123](), [src/index.ts:1-10]()
 | **Version Detection** | Detect FMS major version and gate features with `version()`, `versionInfo()`, `hasFeature()`. |
 | **Aggregation** | Server-side `$apply` with `aggregate()` and `groupBy()` (FMS 2024+). |
 | **Navigation Properties** | Full `$ref` CRUD — `getRefs`, `addRef`, `setRef`, `removeRef` for OData relationship links. |
-| **Multi-Auth** | Basic, Bearer, and FMID (FileMaker Cloud / Claris ID) auth with 401 retry. |
+| **Multi-Auth** | Basic and Bearer (OAuth / FileMaker Cloud) auth with 401 retry. |
 | **Error Handling** | Specialized `FMSODataError` and `FMScriptError` with `isFMSODataError` / `isFMScriptError` type guards. |
 
 ---

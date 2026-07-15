@@ -6,7 +6,9 @@ This page summarizes the completed milestones and release history for `fms-odata
 
 | Version | Features | Status |
 | :--- | :--- | :--- |
-| **v0.2.0** | Spec alignment: version detection, `$apply`, FMSID scripts, `$ref`, FMID auth, IIFE bundle | ✓ Released |
+| **v0.4.0** | DDL schema editing, webhook management, spec-ts 2.0.1 alignment, `bearerAuth` (replaces `fmidAuth`) | ✓ Released |
+| **v0.3.0** | Spec-ts 2.0.0 alignment: drop FM19, OData 4.01, corrected version history | ✓ Released |
+| **v0.2.0** | Spec alignment: version detection, `$apply`, FMSID scripts, `$ref`, Bearer auth, IIFE bundle | ✓ Released |
 | **v0.1.6** | M4 containers, M5 metadata, M6 batch | ✓ Released |
 | **v0.1.4** | M3 script execution | ✓ Released |
 | **v0.1.1** | M1-M2 CRUD queries | ✓ Released |
@@ -115,7 +117,7 @@ Released as `v0.2.0`, this version aligns the library with the [fms-odata-spec](
 - **`$apply` Aggregation**: Server-side `aggregate()` and `groupBy()` methods (FMS 2024+)
 - **FMSID Script Invocation**: Call scripts by immutable ID instead of name (FMS v26+)
 - **Navigation Properties (`$ref`)**: Full CRUD for OData relationship links (`getRefs`, `addRef`, `setRef`, `removeRef`)
-- **FMID Authentication**: `fmidAuth()` helper for FileMaker Cloud / Claris ID tokens
+- **Bearer Authentication**: `bearerAuth()` helper for OAuth / FileMaker Cloud tokens (replaces deprecated `fmidAuth()`)
 - **IIFE Bundle**: New `fms-odata.iife.min.js` for `<script>` tag inclusion without a bundler
 - **Standardized Env Vars**: `FM_SERVER`, `FM_DATABASE`, `FM_USER`, `FM_PASSWORD`, `FM_VERIFY_SSL` (legacy `FM_ODATA_*` still accepted)
 - **Query Parameter Encoding**: Fixed encoding of `$filter` and `$expand` query options

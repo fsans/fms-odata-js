@@ -4,12 +4,12 @@
 
 **A tiny, type-safe OData v4 client built for FileMaker Server.**
 
-Zero runtime dependencies · ~10.6 KB gzipped · ESM + IIFE · Web Viewer / Browser / Node 18+
+Zero runtime dependencies · ~11.1 KB gzipped · ESM + IIFE · Web Viewer / Browser / Node 18+
 
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.5-3178c6?logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
 [![OData](https://img.shields.io/badge/OData-v4-0078D4?logo=data&logoColor=white)](https://www.odata.org/)
-[![FileMaker](https://img.shields.io/badge/FileMaker-19.0--26.0-FF6B00?logo=filemaker&logoColor=white)](https://www.claris.com/filemaker/)
-[![Bundle](https://img.shields.io/badge/gzip-~10.6%20KB-brightgreen)](#)
+[![FileMaker](https://img.shields.io/badge/FileMaker-20.0--26.0-FF6B00?logo=filemaker&logoColor=white)](https://www.claris.com/filemaker/)
+[![Bundle](https://img.shields.io/badge/gzip-~11.1%20KB-brightgreen)](#)
 [![Deps](https://img.shields.io/badge/runtime%20deps-0-blue)](#)
 [![Node](https://img.shields.io/badge/node-%3E%3D18-339933?logo=node.js&logoColor=white)](#)
 [![License](https://img.shields.io/badge/license-MIT-black)](./LICENSE)
@@ -25,20 +25,20 @@ FileMaker Server speaks OData v4, but the spec has sharp corners and FMS has qui
 
 > **Battle-tested in production.** I've been using this library heavily to let FileMaker Web Viewer instances talk to the *same* hosted database they live in — and the performance has been genuinely impressive. Queries that used to require round-tripping through scripts and set-field loops now resolve in a single OData call, with noticeably lower latency and a much cleaner code path. If you're building rich Web Viewer UIs backed by FMS, this is the fastest route I've found.
 
-- **Tiny.** ESM and IIFE bundles, zero runtime dependencies, ~10.6 KB gzipped.
+- **Tiny.** ESM and IIFE bundles, zero runtime dependencies, ~11.1 KB gzipped.
 - **Type-safe.** Fluent, chainable query builder with full TS inference.
 - **Runs anywhere.** Drop it into a FileMaker Web Viewer, a browser, or Node 18+.
 - **FMS-aware.** Handles the documented FMS OData deviations for you.
-- **Version-aware.** Detects the FileMaker Server major version (19, 21, 22, 26) from `$metadata` and gates features accordingly.
+- **Version-aware.** Detects the FileMaker Server major version (20, 21, 22, 26) from `$metadata` and gates features accordingly.
 - **Scripts built in.** Invoke FileMaker scripts at database, entity-set, or record scope — by name or by immutable FMSID (v26+).
 - **Containers built in.** Upload, download, stream, or clear container fields with typed helpers — `Blob`, `ArrayBuffer`, and `Uint8Array` all accepted.
 - **Aggregations.** `$apply` builder for `aggregate()` and `groupBy()` — server-side sum, average, min, max, count (FMS 2024+).
 - **Navigation properties.** Full `$ref` CRUD — `getRefs`, `addRef`, `setRef`, `removeRef` for OData relationship links.
 - **Schema introspection.** `$metadata` parsed into typed `ODataMetadata` with entity types, keys, properties, and actions. Cached by default.
 - **Schema editing (DDL).** Create/delete tables, add/delete fields, create/delete indexes via the `FileMaker_Tables` and `FileMaker_Indexes` system endpoints. Field types validated against the spec; destructive ops guarded by `confirm: true`.
-- **Webhooks.** Create, remove, get, list, and manually invoke webhooks (FMS 2023+ / v21) with typed params and `endpointHeaders` / `queryHeaders` support.
+- **Webhooks.** Create, remove, get, list, and manually invoke webhooks (FMS 2025+ / v22) with typed params and `endpointHeaders` / `queryHeaders` support.
 - **Batch requests.** `$batch` builder composes multiple reads and atomic changesets (POST / PATCH / DELETE) into a single HTTP round-trip.
-- **Multi-auth.** Basic, Bearer, and FMID (FileMaker Cloud / Claris ID) auth with 401 retry, `AbortSignal`, and timeouts built in.
+- **Multi-auth.** Basic and Bearer (OAuth / FileMaker Cloud) auth with 401 retry, `AbortSignal`, and timeouts built in.
 - **Honest errors.** Every failure becomes a normalized `FMSODataError` (or `FMScriptError` for script failures) with `isFMSODataError` / `isFMScriptError` type guards.
 
 ## Status
@@ -73,7 +73,7 @@ Local dev:
 
 ```bash
 npm install
-npm test          # 227 unit tests, offline
+npm test          # 274 unit tests, offline
 ```
 
 ## Quick start
@@ -88,9 +88,9 @@ const db = new FMSOData({
   timeoutMs: 15_000,
 })
 
-// For FileMaker Cloud, use FMID auth instead:
-// import { fmidAuth } from 'fms-odata-js'
-// token: fmidAuth(clarisIdToken)
+// For FileMaker Cloud, use Bearer auth instead:
+// import { bearerAuth } from 'fms-odata-js'
+// token: bearerAuth(oauthToken)
 
 // Collection read
 const { value, count } = await db
@@ -378,7 +378,7 @@ length in parentheses (`VARCHAR(200)`). Destructive operations (`deleteTable`,
 
 ## Webhooks
 
-Manage FileMaker Server webhooks — requires FMS 2023+ (v21). Use
+Manage FileMaker Server webhooks — requires FMS 2025+ (v22). Use
 `hasFeature('webhooks')` to check before calling.
 
 ```ts

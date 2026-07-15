@@ -186,7 +186,7 @@ The browser's `fetch()` API cannot skip certificate validation. If your FMS uses
 ## CDN Version History
 
 - **v0.4.0** (current) — Schema editing (DDL), webhook management, spec-ts 2.0.1 alignment
-- **v0.3.0** — Spec alignment: version detection, `$apply`, FMSID scripts, `$ref`, FMID auth, IIFE build
+- **v0.3.0** — Spec alignment: version detection, `$apply`, FMSID scripts, `$ref`, Bearer auth, IIFE build
 - **v0.1.6** — M4 containers, M5 metadata, M6 batch
 - **v0.1.1** — M1-M3 (basic CRUD + scripts)
 

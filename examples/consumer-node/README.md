@@ -333,7 +333,7 @@ If your consumer project uses TypeScript, the same code works verbatim — the
 library ships `.d.ts` files alongside the bundle. Simply:
 
 ```ts
-import { FMSOData, basicAuth, fmidAuth, type QueryResult, type ODataMetadata } from 'fms-odata-js'
+import { FMSOData, basicAuth, bearerAuth, type QueryResult, type ODataMetadata } from 'fms-odata-js'
 
 interface Contact {
   id: number
