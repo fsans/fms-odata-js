@@ -1,0 +1,17 @@
+{
+  "$schema": "https://context7.com/schema/context7.json",
+  "url": "https://context7.com/fsans/fms-odata-js",
+  "public_key": "pk_Ki9U4pnXdy1s3ILIs2etk",
+  "projectTitle": "fm-odata-js",
+  "description": "Zero-runtime-dependency TypeScript client for FileMaker Server OData v4, usable from FileMaker Web Viewers, browsers, and Node.",
+  "folders": ["docs", "wiki", "examples"],
+  "excludeFolders": ["node_modules", "dist", "tests", "wiki-publish", "examples/**/node_modules", "examples/**/dist"],
+  "excludeFiles": ["CHANGELOG.md", "LICENSE", "odata_releases.md", "m4-plan.md"],
+  "rules": [
+    "Import from 'fm-odata-js'; the package is ESM-only and has zero runtime dependencies.",
+    "Use the FMOData client's query builder and EntityRef APIs instead of hand-building OData URLs.",
+    "FileMaker Server OData has server-specific quirks (authentication, $count, dates, TLS, containers); consult the FileMaker quirks docs before working around unexpected behavior.",
+    "Script execution goes through the script API; handle FMScriptError for script failures.",
+    "In FileMaker Web Viewers use the IIFE build (global FMODataLib); in browsers and Node use the ESM build."
+  ]
+}
