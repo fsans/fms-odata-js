@@ -1429,17 +1429,19 @@ function parseScriptEnvelope(raw, request) {
   const rawResult = envelope.scriptResult;
   let scriptResult;
   let scriptError;
-  if (rawResult !== null && typeof rawResult === "object" && "resultParameter" in rawResult) {
+  let fmsMessage;
+  if (rawResult !== null && typeof rawResult === "object" && ("code" in rawResult || "resultParameter" in rawResult)) {
     const nested = rawResult;
     scriptError = nested.code !== void 0 ? String(nested.code) : "0";
-    scriptResult = nested.resultParameter !== void 0 ? String(nested.resultParameter) : void 0;
+    scriptResult = nested.resultParameter !== void 0 ? typeof nested.resultParameter === "string" ? nested.resultParameter : JSON.stringify(nested.resultParameter) : void 0;
+    if (typeof nested.message === "string") fmsMessage = nested.message;
   } else {
     scriptError = envelope.scriptError !== void 0 ? String(envelope.scriptError) : "0";
     scriptResult = rawResult !== void 0 ? typeof rawResult === "string" ? rawResult : JSON.stringify(rawResult) : void 0;
   }
   if (scriptError !== "0") {
     throw new FMScriptError(
-      `FileMaker script error ${scriptError}`,
+      fmsMessage ? `FileMaker script error ${scriptError}: ${fmsMessage}` : `FileMaker script error ${scriptError}`,
       {
         status: 200,
         scriptError,

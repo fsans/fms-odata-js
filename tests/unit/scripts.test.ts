@@ -205,6 +205,85 @@ describe('script error handling', () => {
   })
 })
 
+describe('nested scriptResult envelope (FMS v26+)', () => {
+  it('parses { scriptResult: { code: 0, resultParameter } } as success', async () => {
+    const fetchMock = vi.fn().mockResolvedValue(
+      jsonResponse({ scriptResult: { code: 0, resultParameter: 'echo:x' } }),
+    )
+    const db = makeClient(fetchMock)
+
+    const result = await db.script('probe_echo', { parameter: 'x' })
+    expect(result.scriptError).toBe('0')
+    expect(result.scriptResult).toBe('echo:x')
+  })
+
+  it('throws FMScriptError on non-zero code, including the FMS message', async () => {
+    const fetchMock = vi.fn().mockResolvedValue(
+      jsonResponse({
+        scriptResult: {
+          code: 104,
+          message: 'The specified script cannot be found (104)',
+          resultParameter: 'boom',
+        },
+      }),
+    )
+    const db = makeClient(fetchMock)
+
+    const err = await db.script('probe_fail', { parameter: 'x' }).catch((e: unknown) => e)
+    expect(err).toBeInstanceOf(FMScriptError)
+    expect((err as FMScriptError).scriptError).toBe('104')
+    expect((err as FMScriptError).scriptResult).toBe('boom')
+    expect((err as FMScriptError).message).toContain('The specified script cannot be found (104)')
+    expect((err as FMScriptError).status).toBe(200)
+  })
+
+  it('throws FMScriptError when the nested envelope has a code but no resultParameter', async () => {
+    const fetchMock = vi.fn().mockResolvedValue(
+      jsonResponse({
+        scriptResult: {
+          code: -1053,
+          message:
+            "Request body must either have no parameters or a single parameter field named 'scriptParameterValue'",
+        },
+      }),
+    )
+    const db = makeClient(fetchMock)
+
+    const err = await db.script('probe_echo', { parameter: 'x' }).catch((e: unknown) => e)
+    expect(err).toBeInstanceOf(FMScriptError)
+    expect((err as FMScriptError).scriptError).toBe('-1053')
+    expect((err as FMScriptError).scriptResult).toBeUndefined()
+    expect((err as FMScriptError).message).toContain('scriptParameterValue')
+  })
+
+  it('stringifies a non-string resultParameter instead of returning "[object Object]"', async () => {
+    const fetchMock = vi.fn().mockResolvedValue(
+      jsonResponse({ scriptResult: { code: 0, resultParameter: { ok: true } } }),
+    )
+    const db = makeClient(fetchMock)
+
+    const result = await db.script('probe_json')
+    expect(result.scriptResult).toBe(JSON.stringify({ ok: true }))
+  })
+})
+
+describe('parameter serialization (scriptParameterValue)', () => {
+  it('accepts number and object parameters', async () => {
+    const fetchMock = vi.fn().mockImplementation(() =>
+      Promise.resolve(jsonResponse({ scriptResult: { code: 0, resultParameter: 'ok' } })),
+    )
+    const db = makeClient(fetchMock)
+
+    await db.script('P', { parameter: 42 })
+    await db.script('P', { parameter: { a: 1 } })
+
+    const [, init1] = fetchMock.mock.calls[0]!
+    const [, init2] = fetchMock.mock.calls[1]!
+    expect((init1 as RequestInit).body).toBe(JSON.stringify({ scriptParameterValue: 42 }))
+    expect((init2 as RequestInit).body).toBe(JSON.stringify({ scriptParameterValue: { a: 1 } }))
+  })
+})
+
 describe('script plumbing', () => {
   it('retries once on 401 via onUnauthorized, then succeeds', async () => {
     const fetchMock = vi

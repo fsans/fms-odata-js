@@ -106,7 +106,7 @@ Sources: [src/scripts.ts:131-160](), [src/errors.ts:17-18]()
 
 The script execution system is powered by the `ScriptInvoker` class, which manages URL construction and HTTP request dispatching.
 
-*   **`ScriptOptions`**: Allows passing a `parameter` (mapped to `scriptParameter` in the JSON body) and an `AbortSignal` for cancellation [src/scripts.ts:27-34]().
+*   **`ScriptOptions`**: Allows passing a `parameter` (mapped to `scriptParameterValue` in the JSON body) and an `AbortSignal` for cancellation [src/scripts.ts:27-34]().
 *   **`ScriptInvoker`**: The internal engine that handles path encoding and response unwrapping [src/scripts.ts:76-123]().
 *   **Convenience Helpers**: `runScriptAtDatabase`, `runScriptAtEntitySet`, and `runScriptAtEntity` provide simplified internal access for the client classes [src/scripts.ts:184-212]().
 

@@ -95,7 +95,7 @@ graph LR
 
     subgraph "Network / FMS Space"
         URL["POST .../Script.MyScript"]
-        BODY["{ 'scriptParameter': '...' }"]
+        BODY["{ 'scriptParameterValue': '...' }"]
         ENV["ScriptResult Envelope"]
     end
 
