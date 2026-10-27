@@ -5,7 +5,28 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [0.4.0] — 2025-01-09
+## [0.4.1] — 2026-10-27
+
+### Fixed — Script invocation envelope (#9)
+
+`db.script()` / `scriptById()` now match the FileMaker Server OData script
+contract, verified live against FileMaker Server 2026.
+
+- **Request field:** the optional `parameter` is sent as
+  `{ "scriptParameterValue": ... }` (the only field name FMS accepts; the
+  previously documented `scriptParameter` is rejected with code `-1053`).
+  The `parameter` option now accepts `string | number | object`.
+- **Nested response envelope (FMS v26+):** FMS 2026 replies with
+  `{ "scriptResult": { "code": 0, "resultParameter": "...", "message": "..." } }`.
+  The parser now reads this shape: a non-zero `code` throws `FMScriptError`
+  with `scriptError = code`, `scriptResult = resultParameter`, and the FMS
+  `message` included in the error text. Previously the nested object was
+  stringified to `"[object Object]"` and failures were reported as success.
+- **Legacy envelope kept:** the flat `{ "scriptResult": "...", "scriptError": "0" }`
+  shape from older FMS versions is still accepted.
+- **Docs:** wiki script pages updated to the `scriptParameterValue` field name
+  and the nested envelope; outdated `scriptParameter` references removed.
+
 
 ### Fixed — DDL and webhook API alignment with real FileMaker Server
 

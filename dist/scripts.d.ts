@@ -15,9 +15,12 @@
  *   POST /<db>/<EntitySet>/Script.FMSID:<id>       // entity-set context
  *   POST /<db>/<EntitySet>(<key>)/Script.FMSID:<id> // single-record context
  *
- * The optional parameter is sent as `{ "scriptParameterValue": "<string>" }`. The
- * response envelope is `{ "scriptResult": "...", "scriptError": "0" }`; a
- * non-zero `scriptError` becomes an `FMScriptError`.
+ * The optional parameter is sent as `{ "scriptParameterValue": ... }` (string,
+ * number or JSON object). The response envelope depends on the FMS version:
+ * older servers reply `{ "scriptResult": "...", "scriptError": "0" }`, while
+ * FMS v26+ nests the result as
+ * `{ "scriptResult": { "code": 0, "resultParameter": "...", "message": "..." } }`.
+ * A non-zero error code becomes an `FMScriptError`.
  *
  * @see https://github.com/fsans/fms-odata-spec/blob/main/docs/06-scripts.md
  */
@@ -36,10 +39,11 @@ export type ScriptIdentifier = {
 export interface ScriptOptions extends RequestOptions {
     /**
      * Optional script parameter. Serialized to the FMS `scriptParameterValue`
-     * field in the request body. If omitted, the body is empty and the script
-     * runs with no parameter (FileMaker's `Get(ScriptParameter)` returns empty).
+     * field in the request body. FMS accepts a string, a number or a JSON
+     * object. If omitted, the body is empty and the script runs with no
+     * parameter (FileMaker's `Get(ScriptParameter)` returns empty).
      */
-    parameter?: string;
+    parameter?: string | number | object;
 }
 /**
  * Result envelope returned by a successful script invocation. A non-zero
