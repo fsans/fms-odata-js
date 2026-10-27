@@ -1,6 +1,6 @@
 {
   "name": "fms-odata-js",
-  "version": "0.4.0",
+  "version": "0.4.1",
   "description": "Zero-runtime-dependency TypeScript client for FileMaker Server OData v4 (Web Viewer, browser, Node).",
   "type": "module",
   "main": "./dist/fms-odata.esm.js",
